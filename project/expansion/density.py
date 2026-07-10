@@ -70,7 +70,7 @@ def compute_C0(c_hat: np.ndarray,
     # subtract max for numerical stability
     f_max = f.max()
     exp_f = np.exp(f - f_max)
-    integral_std = np.trapezoid(exp_f, t)
+    integral_std = np.trapz(exp_f, t)
     # integral over x = sigma * integral over x*
     integral_x = sigma * integral_std * np.exp(f_max)
     return 1.0 / integral_x
@@ -105,7 +105,7 @@ def eval_density(x: np.ndarray,
 def verify_normalization(x: np.ndarray, p: np.ndarray,
                          tol: float = 1e-4) -> bool:
     """Check that integral of p over x ≈ 1."""
-    integral = np.trapezoid(p, x)
+    integral = np.trapz(p, x)
     ok = abs(integral - 1.0) < tol
     if not ok:
         print(f"  Normalization check: integral = {integral:.6f}  (tol={tol:.1e})")

@@ -85,13 +85,27 @@ def build_A(N: int, Q: np.ndarray, At: np.ndarray) -> np.ndarray:
 def build_b(N: int, mh: np.ndarray) -> np.ndarray:
     """
     Build the N-vector b_N.
-    b_N[i] = -sqrt(i-1) * mh[i-1]  for i=1,...,N  (paper 1-based).
-    Python: b[i_py] = -sqrt(i_py) * mh[i_py]  for i_py = 0,...,N-1.
+
+    From Gambaro (2024) eq. (15) / user derivation (image 1):
+        b_N[i] = -sqrt(i-1) * mh[i-2]   for i=1,...,N  (paper 1-based)
+
+    The index is i-2 (not i-1): this is the corrected formula that recovers
+    the exact Fourier coefficients for the Gaussian reference distribution
+    (c_2 = -1/sqrt(2), c_j=0 for j != 2) and gives non-zero ĉ for even-indexed
+    components in symmetric distributions.
+
+    Special case i=1: sqrt(i-1)=0, so b[1]=0 regardless.
+
+    Python mapping: b[i_py] = -sqrt(i_py) * mh[i_py - 1]
+    with b[0] = 0 (i_py=0 → sqrt(0)=0).
     """
     b = np.zeros(N)
     for i_py in range(N):
-        i = i_py + 1  # paper index
-        b[i_py] = -sqrt(i - 1) * mh[i - 1]
+        i = i_py + 1          # paper 1-based index
+        if i <= 1:
+            b[i_py] = 0.0     # sqrt(i-1)=0, index mh[-1] undefined
+        else:
+            b[i_py] = -sqrt(i - 1) * mh[i - 2]   # mh[i-2], not mh[i-1]
     return b
 
 

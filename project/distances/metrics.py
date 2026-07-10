@@ -15,18 +15,36 @@ import numpy as np
 from typing import Optional
 
 
-def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray) -> float:
+def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray,
+             c_exact_full: Optional[np.ndarray] = None) -> float:
     """
-    Coefficient distance (eq. 17):
-    d2(c^_N, c) = sum_{j=1}^{N} (c^_j - c_j)^2
-    c_hat and c_exact are 0-indexed arrays of length N.
+    Full coefficient distance (eq. 17):
+        d₂(ĉN, c) = sqrt( Σ_{j=1}^N (ĉj - cj)² + Σ_{j>N} cj² )
+
+    where ĉN_j = ĉj for j≤N, ĉN_j = 0 for j>N.
+
+    Parameters
+    ----------
+    c_hat        : estimated coefficients, length N (0-indexed, j=1..N)
+    c_exact      : benchmark coefficients for j=1..N (may be shorter, zero-padded)
+    c_exact_full : all benchmark coefficients j=1..N_MAX (for truncation error);
+                   if None, only the estimation component is included.
+
+    Returns
+    -------
+    d2 : scalar (the distance, already square-rooted)
     """
     N = len(c_hat)
     N_ex = len(c_exact)
-    # If c_exact has more elements, truncate; if fewer, zero-pad
     c_ex = np.zeros(N)
     c_ex[:min(N, N_ex)] = c_exact[:min(N, N_ex)]
-    return float(np.sum((c_hat - c_ex)**2))
+    estimation_sq = np.sum((c_hat - c_ex)**2)
+
+    truncation_sq = 0.0
+    if c_exact_full is not None and len(c_exact_full) > N:
+        truncation_sq = float(np.sum(c_exact_full[N:]**2))
+
+    return float(np.sqrt(estimation_sq + truncation_sq))
 
 
 def d_aitchison(x: np.ndarray,
@@ -55,9 +73,9 @@ def d_aitchison(x: np.ndarray,
     d_A : scalar
     """
     diff_log = log_p_hat - log_p
-    E_diff = np.trapezoid(diff_log * nu_weight, x)
+    E_diff = np.trapz(diff_log * nu_weight, x)
     clr_diff = diff_log - E_diff
-    return float(np.sqrt(np.trapezoid(clr_diff**2 * nu_weight, x)))
+    return float(np.sqrt(np.trapz(clr_diff**2 * nu_weight, x)))
 
 
 def d2_log(x: np.ndarray,
@@ -68,17 +86,17 @@ def d2_log(x: np.ndarray,
     d2_log = sqrt( integral (log(p^_N) - log(p))^2 dx )
     Not weighted by nu; allows comparison across bases.
     """
-    return float(np.sqrt(np.trapezoid((log_p_hat - log_p)**2, x)))
+    return float(np.sqrt(np.trapz((log_p_hat - log_p)**2, x)))
 
 
 def d1(x: np.ndarray, p_hat: np.ndarray, p: np.ndarray) -> float:
     """L1 distance (eq. 20): integral |p^_N - p| dx."""
-    return float(np.trapezoid(np.abs(p_hat - p), x))
+    return float(np.trapz(np.abs(p_hat - p), x))
 
 
 def d2(x: np.ndarray, p_hat: np.ndarray, p: np.ndarray) -> float:
     """L2 distance (eq. 21): sqrt( integral (p^_N - p)^2 dx )."""
-    return float(np.sqrt(np.trapezoid((p_hat - p)**2, x)))
+    return float(np.sqrt(np.trapz((p_hat - p)**2, x)))
 
 
 def all_distances(x: np.ndarray,

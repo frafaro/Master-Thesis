@@ -119,7 +119,7 @@ def verify_Q_logistic(Q: np.ndarray, alpha: np.ndarray, beta: np.ndarray,
     L = eval_logistic_recurrence(x, N, alpha, beta)
     max_err = 0.0
     for k in range(N + 1):
-        norm2 = np.trapezoid(L[k]**2 * w, x)
+        norm2 = np.trapz(L[k]**2 * w, x)
         # sum_j Q[k,j]^2 is an approximation but won't equal 1 in general
         # Just check that inner products are finite
         if not np.isfinite(norm2):

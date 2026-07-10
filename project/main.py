@@ -236,10 +236,16 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
         log_p_cos_full, x_full, eval_l_std, nu_logis, m1, sigma, N_MAX)
 
     # ── 9. Coefficient convergence distances ──────────────────────────────────
+    # Full distance d₂(ĉN, c) = sqrt( Σ_{j≤N}(ĉj-cj)² + Σ_{j>N} cj² )
+    # passing c_exact_full so that truncation error is included (eq. 17).
     print("  [9] Computing coefficient convergence distances...")
     N_vals = np.arange(1, N_MAX + 1)
-    d2_h = np.array([d2_coeff(c_hats_hermite[n-1],  c_exact_hermite[:n])  for n in N_vals])
-    d2_l = np.array([d2_coeff(c_hats_logistic[n-1], c_exact_logistic[:n]) for n in N_vals])
+    d2_h = np.array([
+        d2_coeff(c_hats_hermite[n-1],  c_exact_hermite[:n],  c_exact_hermite)
+        for n in N_vals])
+    d2_l = np.array([
+        d2_coeff(c_hats_logistic[n-1], c_exact_logistic[:n], c_exact_logistic)
+        for n in N_vals])
 
     fig_coeff_convergence(d2_h, d2_l, N_vals, model_name, fig_nums["coeff"])
 
@@ -351,7 +357,7 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
 
     # Return data needed for Figure 4
     x_std_full = (x_full - m1) / sigma
-    clr_p = log_p_cos_full - np.trapezoid(log_p_cos_full * nu_gauss, x_full)
+    clr_p = log_p_cos_full - np.trapz(log_p_cos_full * nu_gauss, x_full)
     return {
         "x_std": x_std_full,
         "clr":   clr_p,

@@ -90,7 +90,7 @@ def benchmark_fourier_coeffs(cos_log_p: np.ndarray,
 
     # E_nu[log p] = integral log(p(x)) * nu(x*)/sigma dx
     # nu_weight is already nu(x*)/sigma evaluated at x
-    E_log_p = np.trapezoid(cos_log_p * nu_weight, x)
+    E_log_p = np.trapz(cos_log_p * nu_weight, x)
 
     # clr(p)(x) = log(p(x)) - E_nu[log p]
     clr_p = cos_log_p - E_log_p
@@ -98,7 +98,7 @@ def benchmark_fourier_coeffs(cos_log_p: np.ndarray,
     # c_j = integral clr_p(x) * phi_j(x*) * nu(x*)/sigma dx
     c = np.zeros(N)
     for j in range(1, N + 1):
-        c[j - 1] = np.trapezoid(clr_p * P[j] * nu_weight, x)
+        c[j - 1] = np.trapz(clr_p * P[j] * nu_weight, x)
     return c
 
 
@@ -112,15 +112,15 @@ def verify_cos_density(x: np.ndarray, p: np.ndarray,
       3. integral x^2 * p(x) dx ≈ mu_2
     """
     ok = True
-    integ = np.trapezoid(p, x)
+    integ = np.trapz(p, x)
     if abs(integ - 1.0) > tol:
         print(f"  COS density normalization: {integ:.6f}")
         ok = False
-    mu1_num = np.trapezoid(x * p, x)
+    mu1_num = np.trapz(x * p, x)
     if abs(mu1_num - raw_moments_true[1]) > tol:
         print(f"  COS mean: {mu1_num:.6f} vs {raw_moments_true[1]:.6f}")
         ok = False
-    mu2_num = np.trapezoid(x**2 * p, x)
+    mu2_num = np.trapz(x**2 * p, x)
     if abs(mu2_num - raw_moments_true[2]) > 10 * tol:
         print(f"  COS E[X^2]: {mu2_num:.6f} vs {raw_moments_true[2]:.6f}")
         ok = False

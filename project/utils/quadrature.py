@@ -72,4 +72,4 @@ def make_grid(a: float, b: float, n: int) -> np.ndarray:
 
 def trapz(f: np.ndarray, x: np.ndarray) -> float:
     """Trapezoidal integration of f over x."""
-    return float(np.trapezoid(f, x))
+    return float(np.trapz(f, x))
