@@ -1,0 +1,111 @@
+"""
+Distance metrics between the approximated density p^_N and the true density p.
+
+Equations from Gambaro (2024):
+  (17) d2_coeff: sum_{j=1}^{N} (c^_j - c_j)^2
+  (18) d_A:      sqrt( integral (clr(p^_N) - clr(p))^2 * nu dx )
+  (19) d2_log:   sqrt( integral (log(p^_N) - log(p))^2 dx )
+  (20) d1:       integral |p^_N - p| dx
+  (21) d2:       sqrt( integral (p^_N - p)^2 dx )
+
+All integrals are computed via the trapezoidal rule on the grid x.
+"""
+
+import numpy as np
+from typing import Optional
+
+
+def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray) -> float:
+    """
+    Coefficient distance (eq. 17):
+    d2(c^_N, c) = sum_{j=1}^{N} (c^_j - c_j)^2
+    c_hat and c_exact are 0-indexed arrays of length N.
+    """
+    N = len(c_hat)
+    N_ex = len(c_exact)
+    # If c_exact has more elements, truncate; if fewer, zero-pad
+    c_ex = np.zeros(N)
+    c_ex[:min(N, N_ex)] = c_exact[:min(N, N_ex)]
+    return float(np.sum((c_hat - c_ex)**2))
+
+
+def d_aitchison(x: np.ndarray,
+                log_p_hat: np.ndarray,
+                log_p: np.ndarray,
+                nu_weight: np.ndarray) -> float:
+    """
+    Aitchison distance (eq. 18):
+    d_A = sqrt( integral (clr(p^_N) - clr(p))^2 * nu dx )
+
+    Since clr(f) = log(f) - E_nu[log(f)], we have:
+    clr(p^_N) - clr(p) = (log(p^_N) - log(p)) - E_nu[log(p^_N) - log(p)]
+
+    The E_nu term shifts the difference by a constant, which integrates to
+    a constant-squared contribution. We compute it explicitly.
+
+    Parameters
+    ----------
+    x          : integration grid (original scale), shape (M,)
+    log_p_hat  : log(p^_N(x)), shape (M,)
+    log_p      : log(p(x)) from COS, shape (M,)
+    nu_weight  : nu(x*)/sigma evaluated at x, shape (M,)  (normalized: integral = 1)
+
+    Returns
+    -------
+    d_A : scalar
+    """
+    diff_log = log_p_hat - log_p
+    E_diff = np.trapezoid(diff_log * nu_weight, x)
+    clr_diff = diff_log - E_diff
+    return float(np.sqrt(np.trapezoid(clr_diff**2 * nu_weight, x)))
+
+
+def d2_log(x: np.ndarray,
+           log_p_hat: np.ndarray,
+           log_p: np.ndarray) -> float:
+    """
+    L2 distance between log-densities (eq. 19):
+    d2_log = sqrt( integral (log(p^_N) - log(p))^2 dx )
+    Not weighted by nu; allows comparison across bases.
+    """
+    return float(np.sqrt(np.trapezoid((log_p_hat - log_p)**2, x)))
+
+
+def d1(x: np.ndarray, p_hat: np.ndarray, p: np.ndarray) -> float:
+    """L1 distance (eq. 20): integral |p^_N - p| dx."""
+    return float(np.trapezoid(np.abs(p_hat - p), x))
+
+
+def d2(x: np.ndarray, p_hat: np.ndarray, p: np.ndarray) -> float:
+    """L2 distance (eq. 21): sqrt( integral (p^_N - p)^2 dx )."""
+    return float(np.sqrt(np.trapezoid((p_hat - p)**2, x)))
+
+
+def all_distances(x: np.ndarray,
+                  p_hat: np.ndarray,
+                  p: np.ndarray,
+                  nu_weight: np.ndarray) -> dict:
+    """
+    Compute all four density distances at once.
+
+    Parameters
+    ----------
+    x          : grid (original scale)
+    p_hat      : approximated density on x
+    p          : true (COS) density on x
+    nu_weight  : weight nu(x*)/sigma on x (integrates to 1)
+
+    Returns
+    -------
+    dict with keys: 'aitchison', 'log_l2', 'l1', 'l2'
+    """
+    # Clip to avoid log(0)
+    eps = 1e-300
+    lp_hat = np.log(np.maximum(p_hat, eps))
+    lp     = np.log(np.maximum(p, eps))
+    return {
+        "aitchison": d_aitchison(x, lp_hat, lp, nu_weight),
+        "log_l2":    d2_log(x, lp_hat, lp),
+        "l1":        d1(x, p_hat, p),
+        "l2":        d2(x, p_hat, p),
+    }
