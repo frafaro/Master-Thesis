@@ -2,13 +2,23 @@
 Build and solve the linear system A_N * c_hat = b_N  (eq. 15, Gambaro 2024).
 
 Components:
-  - Delta_{p,q,r}:  combinatorial triple-Hermite-integral coefficient
-  - A~_N[i,j]:  = sum_{k=0}^{i+j-2} (1/k!) * Delta_{i-1,j-1,k} * mh[k]
-  - A_N[i,n]:   = sum_{j=0}^{n} sqrt(j) * Q[n,j] * A~_N[i,j]
-  - b_N[i]:     = -sqrt(i-1) * mh[i-1]   (1-based index i=1,...,N)
+  - Delta_{p,q,r}:  triple integral of UNNORMALIZED Hermite polynomials
+                    = integral He_p He_q He_r omega dx
+                    = p! q! r! / (b-p)!(b-q)!(b-r)!   (b = (p+q+r)/2)
+  - A~_N[i,j]:  = sum_{k=0}^{i+j-2}  Delta_{i-1,j-1,k} / sqrt((i-1)!(j-1)!k!)  *  mh[k]
+                  = E_p[ h_{i-1}(X*) * h_{j-1}(X*) ]
+                  using NORMALIZED moments  mh[k] = E_p[h_k(X*)] = E_p[He_k(X*)] / sqrt(k!)
+  - A_N[i,n]:   = sum_{j=1}^{n} sqrt(j) * Q[n,j] * A~_N[i,j]
+  - b_N[i]:     = -sqrt(i-1) * mh[i-2]   (1-based index i=1,...,N)
 
-All arrays use 0-based Python indexing internally; the paper's 1-based
-formulas are translated as: paper index i  →  Python index i-1.
+Normalization convention (consistent across the entire code-base):
+  h_k = He_k / sqrt(k!)           — NORMALIZED Hermite polynomial
+  mh[k] = E_p[h_k(X*)]            — NORMALIZED Hermite moment  (stored in mh array)
+  Delta_{p,q,r}                   — uses UNNORMALIZED He polynomials
+  A~_N[i,j] factor = 1/sqrt(p!q!r!) — converts Delta back to normalized inner product
+
+A~_N reduces to the identity matrix when p = omega (Gaussian), because
+  Delta(p,p,0)/sqrt(p!p!) = p!/p! = 1  (only k=0 contributes for Gaussian mh).
 
 Reference for Delta: Erdelyi et al. (1953) / Grad (1949):
   integral He_p He_q He_r omega dx = p! q! r! / (b-p)!(b-q)!(b-r)!
@@ -44,22 +54,30 @@ def delta_coeff(p: int, q: int, r: int) -> float:
 def build_A_tilde(N: int, mh: np.ndarray) -> np.ndarray:
     """
     Build the N×N matrix A~_N.
-    A~_N[i,j] = sum_{k=0}^{i+j-2} (1/k!) * Delta_{i-1,j-1,k} * mh[k]
+
+    Correct formula (uses NORMALIZED moments mh[k] = E_p[h_k(X*)]):
+        A~_N[i,j] = sum_{k=0}^{i+j-2}  Delta_{i-1,j-1,k} / sqrt((i-1)! (j-1)! k!)  *  mh[k]
+                  = E_p[ h_{i-1}(X*) * h_{j-1}(X*) ]
+
+    The denominator sqrt(p! q! r!) converts the unnormalized Delta integral
+    (for He_p He_q He_r) into the normalized inner product (for h_p h_q h_r = He_p/sqrt(p!) …).
+
     where i,j = 1,...,N  (Python: 0,...,N-1 via offset i_py = i-1, j_py = j-1).
-    The paper's mh[k] = m^h_k is provided as array mh (0-indexed: mh[k]).
     """
     At = np.zeros((N, N))
     for i in range(1, N + 1):
         for j in range(1, N + 1):
+            p_idx = i - 1
+            q_idx = j - 1
             s = 0.0
             for k in range(0, i + j - 1):   # k = 0,...,i+j-2
                 if k >= len(mh):
                     break
-                fk = float(factorial(k))
-                d = delta_coeff(i - 1, j - 1, k)
+                d = delta_coeff(p_idx, q_idx, k)
                 if d == 0.0:
                     continue
-                s += (1.0 / fk) * d * mh[k]
+                norm = sqrt(factorial(p_idx) * factorial(q_idx) * factorial(k))
+                s += (d / norm) * mh[k]
             At[i - 1, j - 1] = s
     return At
 
