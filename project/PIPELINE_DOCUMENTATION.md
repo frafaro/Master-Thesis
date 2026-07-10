@@ -91,8 +91,14 @@ where q_{n,j} are the expansion coefficients of φ_n in the Hermite basis {h_j}:
 
 **b_N (right-hand side)**:
 ```
-b_N[i] = −√(i−1) · mʰ_{i−1}    for i = 1,...,N
+b_N[i] = −√(i−1) · mʰ_{i−2}    for i = 1,...,N
 ```
+Special case i=1: √(i−1)=0 so b_N[1]=0 regardless of the moment index.
+The index is `i−2` (not `i−1`): this is derived by integration by parts using
+h'_{i−1}(x*) = √(i−1) · h_{i−2}(x*), and confirmed by:
+- the Gaussian test: ĉ_2 = −1/√2, all other ĉ_j = 0 (exact)
+- Appendix B of the paper: the 2D analogue gives b_{i,j} = −√(i−1) · mʰ_{i−2, j−1},
+  which reduces to b_i = −√(i−1) · mʰ_{i−2} when j=1 (1D case)
 
 **Hermite moments mʰ_k**:
 ```
@@ -386,7 +392,7 @@ All distances computed via trapezoidal rule on the truncated domain I.
 
 | Equation | Name | Formula |
 |----------|------|---------|
-| (17) | Coefficient distance | d₂(ĉ_N,c) = Σ_{j=1}^N (ĉʲ_N − c_j)² |
+| (17) | Coefficient distance | d₂(ĉ_N,c) = √[ Σ_{j=1}^N (ĉʲ_N − c_j)² + Σ_{j>N} cʲ² ] |
 | (18) | Aitchison distance | d_A = √[ ∫ (clr(p̂_N)−clr(p))² ν dx ] |
 | (19) | L²-log distance | d₂(log) = √[ ∫ (log p̂_N−log p)² dx ] |
 | (20) | L¹ distance | d₁ = ∫ |p̂_N−p| dx |
@@ -529,7 +535,8 @@ The following values were verified numerically against the paper's formulas:
 | Δ_{2,2,0} | 2 | 2.000000 | ✓ |
 | Δ_{1,1,2} | 2 | 2.000000 | ✓ |
 | A_N[i,n] = √n·Ã_N[i,n] (Hermite, all N≤20) | — | — | ✓ |
-| b_N[0]=b_N[1]=b_N[2] = 0 | 0 | 0 | ✓ |
+| Gaussian test: c_hat_2=-1/sqrt(2), all other c_hat_j=0 | exact | exact | ✓ |
+| b_N[1]=-1, b_N[0]=b_N[2]=0 (Gaussian, corrected b formula) | — | verified | ✓ |
 | mʰ₀ = 1 | 1 | 1.000000 | ✓ |
 | mʰ₁ = 0 (standardized) | 0 | ~0 | ✓ |
 | mʰ₂ = 0 (unit variance) | 0 | ~0 | ✓ |
@@ -544,7 +551,46 @@ The following values were verified numerically against the paper's formulas:
 
 ---
 
-## 7. Known Differences from the Paper
+## 7. Appendix B Cross-Check: 2D Formula Confirmation
+
+Gambaro (2024) Appendix B extends the moment-based estimation to **bivariate PDFs p(x₁,x₂)**.
+The 2D system is `ΣΣ A_{i,j,n,m} ĉ_{n,m} = b_{i,j}` with:
+
+```
+A_{i,j,n,m} = √n · Σ_{k=0}^{i+n−2} Σ_{l=0}^{j+m−1}  (1/(k!l!)) · Δ_{i−1,n−1,k} · Δ_{j−1,m,l} · mʰ_{k,l}
+
+b_{i,j} = −√(i−1) · mʰ_{i−2, j−1}
+
+mʰ_{i,j} = ∫ h_i(x₁) h_j(x₂) p(x₁,x₂) dx₁dx₂  (mixed Hermite moment)
+```
+
+**What this confirms for the 1D code:**
+
+| 2D formula | 1D reduction (j=1) | Our 1D code | Status |
+|---|---|---|---|
+| b_{i,j} = −√(i−1) mʰ_{i−2, j−1} | b_i = −√(i−1) mʰ_{i−2} (since mʰ_{k,0}=mʰ_k) | `b[i]=-sqrt(i-1)*mh[i-2]` | ✓ |
+| √n factor outside the double sum | A[i,n] = √n · Ã[i,n] (Hermite, Q=I) | `build_A`: √n·Ã | ✓ |
+| First Delta Δ_{i−1,n−1,k}, k→i+n−2 | Same | `delta_coeff(i-1,j-1,k)` | ✓ |
+
+**Structural asymmetry in 2D A:** The second Delta uses `Δ_{j−1,m,l}` (m not m−1), while
+the first uses `Δ_{i−1,n−1,k}` (both shifted). This is intentional: integration by parts
+is applied only in the x₁ direction, so the test-function direction (i→i−1) and basis
+direction (n→n−1) are both shifted, but in the x₂ direction only the test function
+index j−1 is shifted (no derivative taken in x₂).
+
+**Kurtosis signal location in b:** For the VG model (symmetric, excess kurtosis κ=2),
+the b vector entries are driven by `mʰ_k = E_p[h_k(X*)]`. The first non-trivially
+non-zero higher moment is `mʰ_4 = κ/(2√6) ≈ 0.408`, which enters **b[6]** (i=6):
+```
+b[6] = −√5 · mʰ_4 ≈ −0.913
+```
+The kurtosis contribution flows into ĉ_6 directly (via b[6]) and into ĉ_4 only
+indirectly via off-diagonal coupling in A. This is why ĉ_4 is small and ĉ_6
+carries most of the kurtosis signal in the VG Hermite expansion.
+
+---
+
+## 8. Known Differences from the Paper
 
 1. **CPU times (Table 2)**: Our timings (COS≈0.61s, Hermite≈0.006s, Logistic≈0.006s)
    differ from the paper's (COS≈0.15–0.66s, Hermite≈0.015–0.020s, Logistic≈0.049–0.093s)
