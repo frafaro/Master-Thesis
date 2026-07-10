@@ -53,20 +53,27 @@ def fig_coeff_convergence(d2_hermite: np.ndarray,
                           fig_num: int):
     """
     Figure fig_num (1, 2, or 3).
-    Left panel (a): d2(c^_N, c) for Hermite basis.
-    Right panel (b): d2(c^_N, c) for Logistic basis.
-    y-axis in log10 scale.
+    Left panel (a):  d₂(ĉN, c) for Hermite basis  (eq. 17, incl. truncation).
+    Right panel (b): d₂(ĉN, c) for Logistic basis.
+    y-axis in log10 scale.  x-axis shows N from the first valid value to N_MAX.
     """
+    # Filter to N where distance is finite and positive
+    mask = np.isfinite(d2_hermite) & (d2_hermite > 0)
+    mask_l = np.isfinite(d2_logistic) & (d2_logistic > 0)
+
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    for ax, d2_vals, label in [
-        (axes[0], d2_hermite,  "Hermite"),
-        (axes[1], d2_logistic, "Logistic"),
+    for ax, d2_vals, label, m in [
+        (axes[0], d2_hermite,  "Hermite",  mask),
+        (axes[1], d2_logistic, "Logistic", mask_l),
     ]:
-        ax.semilogy(N_vals, d2_vals, "o-", color=COLORS["hermite"] if label == "Hermite" else COLORS["logistic"])
+        color = COLORS["hermite"] if label == "Hermite" else COLORS["logistic"]
+        ax.semilogy(N_vals[m], d2_vals[m], "o-", color=color)
         ax.set_xlabel("N")
         ax.set_ylabel(r"$d_2(\hat{c}^N, c)$")
-        ax.set_title(f"({chr(96 + (1 if label=='Hermite' else 2))}) {label} basis")
+        ax.set_title(f"({chr(96 + (1 if label=='Hermite' else 2))}) {label} basis — {model_name}")
         ax.grid(True, which="both", linestyle=":", alpha=0.6)
+        if m.any():
+            ax.set_xlim([N_vals[m][0] - 0.5, N_vals[m][-1] + 0.5])
     fig.suptitle(f"Figure {fig_num}: Coefficient convergence — {model_name}", y=1.01)
     fig.tight_layout()
     _save(fig, f"figure_{fig_num:02d}_coeff_{model_name.lower()}.pdf")
