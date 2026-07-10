@@ -206,47 +206,70 @@ def fig_density_comparison(x: np.ndarray,
                            model_name: str,
                            fig_num: int):
     """
-    4-subplot figure comparing true (COS) PDF with exponential expansion.
-    Layout:
-      (a) top-left:   PDF,     Hermite,  N=6 and N=16 vs COS
-      (b) top-right:  log-PDF, Hermite,  N=6 and N=16 vs COS
-      (c) bottom-left:  PDF,     Logistic, N=6 and N=16 vs COS
-      (d) bottom-right: log-PDF, Logistic, N=6 and N=16 vs COS
+    4-subplot figure matching Gambaro (2024) Figs 9-12 layout exactly.
+
+    Layout (2x2):
+      (a) top-left:     PDF      at N=6   — 3 curves
+      (b) top-right:    PDF      at N=16  — 3 curves
+      (c) bottom-left:  log-PDF  at N=6   — 3 curves
+      (d) bottom-right: log-PDF  at N=16  — 3 curves
+
+    Each subplot has THREE curves:
+      - Solid black thick:     "cos method"
+      - Dashed red:            p-hat_N Hermite
+      - Dash-dot blue:         p-hat_N Logistic
+
+    Subplot title: "{model_name} N = {N}"
+    Y-axis: "pdf" (top row), "log-pdf" (bottom row)
+    X-axis: actual x domain (no label text)
+    Panel labels (a)(b)(c)(d) centred below each subplot.
     """
     eps = 1e-300
-    log_cos  = np.log(np.maximum(p_cos, eps))
+    log_cos  = np.log(np.maximum(p_cos,        eps))
+    log_h6   = np.log(np.maximum(p_hermite_6,  eps))
+    log_h16  = np.log(np.maximum(p_hermite_16, eps))
+    log_l6   = np.log(np.maximum(p_logistic_6, eps))
+    log_l16  = np.log(np.maximum(p_logistic_16, eps))
+
+    N6, N16 = 6, 16
+
+    panels = [
+        # (ax_pos,  title,                    use_log, y_h,    y_l)
+        ((0, 0), f"{model_name} N = {N6}",  False, p_hermite_6,  p_logistic_6),
+        ((0, 1), f"{model_name} N = {N16}", False, p_hermite_16, p_logistic_16),
+        ((1, 0), f"{model_name} N = {N6}",  True,  log_h6,       log_l6),
+        ((1, 1), f"{model_name} N = {N16}", True,  log_h16,      log_l16),
+    ]
+    panel_labels = ["(a)", "(b)", "(c)", "(d)"]
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 9))
 
-    panels = [
-        (axes[0, 0], "PDF",     "Hermite",  p_hermite_6,  p_hermite_16,  False),
-        (axes[0, 1], "log-PDF", "Hermite",  p_hermite_6,  p_hermite_16,  True),
-        (axes[1, 0], "PDF",     "Logistic", p_logistic_6, p_logistic_16, False),
-        (axes[1, 1], "log-PDF", "Logistic", p_logistic_6, p_logistic_16, True),
-    ]
+    for (r, c), title, use_log, y_h, y_l, plabel in zip(
+            [p[0] for p in panels],
+            [p[1] for p in panels],
+            [p[2] for p in panels],
+            [p[3] for p in panels],
+            [p[4] for p in panels],
+            panel_labels):
+        ax = axes[r, c]
+        y_cos = log_cos if use_log else p_cos
 
-    for ax, ylabel_type, basis_name, p6, p16, use_log in panels:
-        color = COLORS["hermite"] if basis_name == "Hermite" else COLORS["logistic"]
-        if use_log:
-            y_cos = log_cos
-            y6    = np.log(np.maximum(p6,  eps))
-            y16   = np.log(np.maximum(p16, eps))
-            ax.set_ylabel(r"$\ln\, p(x)$")
-        else:
-            y_cos = p_cos
-            y6    = p6
-            y16   = p16
-            ax.set_ylabel(r"$p(x)$")
+        ax.plot(x, y_cos, color="black",    linestyle="-",   linewidth=2.0,
+                label="cos method")
+        ax.plot(x, y_h,   color="tab:red",  linestyle="--",  linewidth=1.5,
+                label=r"$\hat{p}_N$ Hermite")
+        ax.plot(x, y_l,   color="tab:blue", linestyle="-.",  linewidth=1.5,
+                label=r"$\hat{p}_N$ Logistic")
 
-        ax.plot(x, y_cos, color=COLORS["cos"],  lw=2,   linestyle="-",  label="COS (true)")
-        ax.plot(x, y6,    color=color,           lw=1.5, linestyle="--", label=f"{basis_name} N=6",  alpha=0.85)
-        ax.plot(x, y16,   color=color,           lw=1.5, linestyle=":",  label=f"{basis_name} N=16", alpha=0.85)
-        ax.set_xlabel("x")
-        ax.legend(fontsize=9)
-        ax.grid(True, linestyle=":", alpha=0.5)
+        ax.set_title(title, fontsize=11)
+        ax.set_ylabel("log-pdf" if use_log else "pdf")
+        ax.tick_params(direction="in", which="both")
+        ax.legend(loc="upper right", fontsize=9)
+        ax.grid(False)
+        ax.text(0.5, -0.10, plabel, transform=ax.transAxes,
+                ha="center", va="top", fontsize=12)
 
-    fig.suptitle(f"Figure {fig_num}: Density comparison — {model_name}", y=1.01)
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0.02, 1, 1])
     _save(fig, f"figure_{fig_num:02d}_density_{model_name.lower()}.pdf")
 
 
