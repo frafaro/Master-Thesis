@@ -141,32 +141,57 @@ def fig_density_distances(dist_hermite: Dict[str, np.ndarray],
                           fig_num: int,
                           logistic_only: bool = False):
     """
-    4-subplot figure showing four distance metrics vs N.
-    dist_hermite / dist_logistic: dicts with keys
-      'aitchison', 'log_l2', 'l1', 'l2', each an array of length len(N_vals).
-    logistic_only: if True (Fig 8), only plot logistic curve.
+    4-subplot figure matching Gambaro (2024) Figs 5-8 layout exactly.
+
+    Layout (2×2):
+      (a) top-left:     Aitchison distance     y: "Aitchison distance"
+      (b) top-right:    L2 log-pdf distance    y: r"$\mathcal{L}^2$ distance for log-pdf"
+      (c) bottom-left:  L1 distance            y: r"$\mathcal{L}^1$ distance"
+      (d) bottom-right: L2 distance            y: r"$\mathcal{L}^2$ distance"
+
+    Each subplot:
+      - Title: model_name ("VG", "NIG", "Heston …")
+      - Hermite: dashed red,  label r"$\hat{p}_N$ Hermite"
+      - Logistic: solid blue, label r"$\hat{p}_N$ Logistic"
+      - Linear y-scale, no markers
+      - X-axis "N", range 2-16
+      - (a)/(b)/(c)/(d) centred below each subplot
     """
-    keys   = ["aitchison", "log_l2", "l1", "l2"]
-    titles = [
-        r"(a) Aitchison distance $d_A$",
-        r"(b) Log-L2 distance $d_2(\ln\hat{p}_N,\ln p)$",
-        r"(c) L1 distance $d_1$",
-        r"(d) L2 distance $d_2$",
+    keys    = ["aitchison", "log_l2", "l1", "l2"]
+    ylabels = [
+        "Aitchison distance",
+        r"$\mathcal{L}^2$ distance for log-pdf",
+        r"$\mathcal{L}^1$ distance",
+        r"$\mathcal{L}^2$ distance",
     ]
+    panel_labels = ["(a)", "(b)", "(c)", "(d)"]
+
+    # Restrict to N = 2..16
+    mask = (N_vals >= 2) & (N_vals <= 16)
+    ns   = N_vals[mask]
+
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
-    for ax, key, title in zip(axes.flatten(), keys, titles):
+    for ax, key, ylabel, plabel in zip(axes.flatten(), keys, ylabels, panel_labels):
         if not logistic_only:
-            ax.semilogy(N_vals, dist_hermite[key], "o-",
-                        color=COLORS["hermite"],  label="Hermite")
-        ax.semilogy(N_vals, dist_logistic[key], "s--",
-                    color=COLORS["logistic"], label="Logistic")
-        ax.set_xlabel("N")
-        ax.set_ylabel("distance")
-        ax.set_title(title, fontsize=10)
-        ax.legend()
-        ax.grid(True, which="both", linestyle=":", alpha=0.6)
-    fig.suptitle(f"Figure {fig_num}: Density convergence — {model_name}", y=1.01)
-    fig.tight_layout()
+            ax.plot(ns, dist_hermite[key][mask],
+                    color="tab:red",  linestyle="--", linewidth=1.5,
+                    label=r"$\hat{p}_N$ Hermite")
+        ax.plot(ns, dist_logistic[key][mask],
+                color="tab:blue", linestyle="-",  linewidth=1.5,
+                label=r"$\hat{p}_N$ Logistic")
+        ax.set_title(model_name, fontsize=11)
+        ax.set_xlabel("$N$")
+        ax.set_ylabel(ylabel)
+        ax.set_xlim(2, 16)
+        ax.set_xticks(range(2, 17, 2))
+        ax.legend(loc="upper right", fontsize=9)
+        ax.tick_params(direction="in", which="both")
+        ax.grid(False)
+        # panel label centred below x-axis
+        ax.text(0.5, -0.18, plabel, transform=ax.transAxes,
+                ha="center", va="top", fontsize=12)
+
+    fig.tight_layout(rect=[0, 0.02, 1, 1])
     _save(fig, f"figure_{fig_num:02d}_distances_{model_name.lower()}.pdf")
 
 
