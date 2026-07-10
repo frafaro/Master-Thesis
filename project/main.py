@@ -47,7 +47,7 @@ from expansion.density import compute_C0, eval_density
 from cos.cos_method import cos_density, benchmark_fourier_coeffs, verify_cos_density
 
 # Distances
-from distances.metrics import d2_coeff, all_distances
+from distances.metrics import d2_coeff, d2_coeff_estim, all_distances
 
 # Plots
 from plots.figures import (
@@ -236,18 +236,32 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
         log_p_cos_full, x_full, eval_l_std, nu_logis, m1, sigma, N_MAX)
 
     # ── 9. Coefficient convergence distances ──────────────────────────────────
-    # Full distance d₂(ĉN, c) = sqrt( Σ_{j≤N}(ĉj-cj)² + Σ_{j>N} cj² )
-    # passing c_exact_full so that truncation error is included (eq. 17).
+    # Two curves per basis (paper Fig. 1-3 format):
+    #   "first 6 coefficients":  sqrt( Σ_{j=1}^{min(6,N)} (ĉj - cj)² )
+    #   "all coefficients":      sqrt( Σ_{j=1}^{N}         (ĉj - cj)² )
+    # Both use estimation error only (no truncation), x-axis range N=4..16.
     print("  [9] Computing coefficient convergence distances...")
     N_vals = np.arange(1, N_MAX + 1)
-    d2_h = np.array([
-        d2_coeff(c_hats_hermite[n-1],  c_exact_hermite[:n],  c_exact_hermite)
+
+    d2_h_first6 = np.array([
+        d2_coeff_estim(c_hats_hermite[n-1],  c_exact_hermite[:n],  max_j=6)
         for n in N_vals])
-    d2_l = np.array([
-        d2_coeff(c_hats_logistic[n-1], c_exact_logistic[:n], c_exact_logistic)
+    d2_h_all = np.array([
+        d2_coeff_estim(c_hats_hermite[n-1],  c_exact_hermite[:n])
         for n in N_vals])
 
-    fig_coeff_convergence(d2_h, d2_l, N_vals, model_name, fig_nums["coeff"])
+    d2_l_first6 = np.array([
+        d2_coeff_estim(c_hats_logistic[n-1], c_exact_logistic[:n], max_j=6)
+        for n in N_vals])
+    d2_l_all = np.array([
+        d2_coeff_estim(c_hats_logistic[n-1], c_exact_logistic[:n])
+        for n in N_vals])
+
+    fig_coeff_convergence(
+        d2_h_first6, d2_h_all,
+        d2_l_first6, d2_l_all,
+        N_vals, model_name, fig_nums["coeff"]
+    )
 
     # ── 10. Evaluate densities and CLR ────────────────────────────────────────
     print("  [10] Evaluating exponential expansion densities...")
