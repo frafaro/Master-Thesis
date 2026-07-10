@@ -121,10 +121,10 @@ def fig_density_distances(dist_hermite: Dict[str, np.ndarray],
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
     for ax, key, title in zip(axes.flatten(), keys, titles):
         if not logistic_only:
-            ax.semilogy(N_vals, dist_hermite[key],  "o-",
-                        color=COLORS["hermite"],  label="Hermite",  linestyle=LS["hermite"])
+            ax.semilogy(N_vals, dist_hermite[key], "o-",
+                        color=COLORS["hermite"],  label="Hermite")
         ax.semilogy(N_vals, dist_logistic[key], "s--",
-                    color=COLORS["logistic"], label="Logistic", linestyle=LS["logistic"])
+                    color=COLORS["logistic"], label="Logistic")
         ax.set_xlabel("N")
         ax.set_ylabel("distance")
         ax.set_title(title, fontsize=10)
