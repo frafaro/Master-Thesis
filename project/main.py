@@ -356,9 +356,11 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     pl6  = get_density_logistic(N6,  x_full, a_full, b_full)
     pl16 = get_density_logistic(N16, x_full, a_full, b_full)
 
+    # Fig 12 (Heston full domain): Hermite diverges on wide domain → omit it
     fig_density_comparison(x_full, p_cos_full,
                            ph6, ph16, pl6, pl16,
-                           model_name, fig_nums["dens_full"])
+                           model_name, fig_nums["dens_full"],
+                           show_hermite=(not is_heston))
 
     if is_heston and fig_nums.get("dens_restr") is not None:
         ph6_r  = get_density_hermite(N6,   x_restr, a_restr, b_restr)

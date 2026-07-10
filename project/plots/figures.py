@@ -204,37 +204,39 @@ def fig_density_comparison(x: np.ndarray,
                            p_logistic_6:  np.ndarray,
                            p_logistic_16: np.ndarray,
                            model_name: str,
-                           fig_num: int):
+                           fig_num: int,
+                           show_hermite: bool = True):
     """
     4-subplot figure matching Gambaro (2024) Figs 9-12 layout exactly.
 
     Layout (2x2):
-      (a) top-left:     PDF      at N=6   — 3 curves
-      (b) top-right:    PDF      at N=16  — 3 curves
-      (c) bottom-left:  log-PDF  at N=6   — 3 curves
-      (d) bottom-right: log-PDF  at N=16  — 3 curves
+      (a) top-left:     PDF      at N=6
+      (b) top-right:    PDF      at N=16
+      (c) bottom-left:  log-PDF  at N=6
+      (d) bottom-right: log-PDF  at N=16
 
-    Each subplot has THREE curves:
+    Curves per subplot:
       - Solid black thick:     "cos method"
-      - Dashed red:            p-hat_N Hermite
+      - Dashed red (optional): p-hat_N Hermite  (show_hermite=False for Fig 12)
       - Dash-dot blue:         p-hat_N Logistic
+
+    show_hermite=False: omit Hermite (used for Heston full-domain Fig 12
+    where Hermite diverges on the wide domain).
 
     Subplot title: "{model_name} N = {N}"
     Y-axis: "pdf" (top row), "log-pdf" (bottom row)
-    X-axis: actual x domain (no label text)
     Panel labels (a)(b)(c)(d) centred below each subplot.
     """
     eps = 1e-300
-    log_cos  = np.log(np.maximum(p_cos,        eps))
-    log_h6   = np.log(np.maximum(p_hermite_6,  eps))
-    log_h16  = np.log(np.maximum(p_hermite_16, eps))
-    log_l6   = np.log(np.maximum(p_logistic_6, eps))
+    log_cos  = np.log(np.maximum(p_cos,         eps))
+    log_h6   = np.log(np.maximum(p_hermite_6,   eps))
+    log_h16  = np.log(np.maximum(p_hermite_16,  eps))
+    log_l6   = np.log(np.maximum(p_logistic_6,  eps))
     log_l16  = np.log(np.maximum(p_logistic_16, eps))
 
     N6, N16 = 6, 16
 
     panels = [
-        # (ax_pos,  title,                    use_log, y_h,    y_l)
         ((0, 0), f"{model_name} N = {N6}",  False, p_hermite_6,  p_logistic_6),
         ((0, 1), f"{model_name} N = {N16}", False, p_hermite_16, p_logistic_16),
         ((1, 0), f"{model_name} N = {N6}",  True,  log_h6,       log_l6),
@@ -254,17 +256,20 @@ def fig_density_comparison(x: np.ndarray,
         ax = axes[r, c]
         y_cos = log_cos if use_log else p_cos
 
-        ax.plot(x, y_cos, color="black",    linestyle="-",   linewidth=2.0,
+        ax.plot(x, y_cos, color="black",    linestyle="-",  linewidth=2.0,
                 label="cos method")
-        ax.plot(x, y_h,   color="tab:red",  linestyle="--",  linewidth=1.5,
-                label=r"$\hat{p}_N$ Hermite")
-        ax.plot(x, y_l,   color="tab:blue", linestyle="-.",  linewidth=1.5,
+        if show_hermite:
+            ax.plot(x, y_h, color="tab:red", linestyle="--", linewidth=1.5,
+                    label=r"$\hat{p}_N$ Hermite")
+        ax.plot(x, y_l,   color="tab:blue", linestyle="-.", linewidth=1.5,
                 label=r"$\hat{p}_N$ Logistic")
 
         ax.set_title(title, fontsize=11)
         ax.set_ylabel("log-pdf" if use_log else "pdf")
         ax.tick_params(direction="in", which="both")
-        ax.legend(loc="upper right", fontsize=9)
+        # legend placement: upper right for PDF panels, lower right for log-PDF
+        legend_loc = "upper right" if not use_log else "lower left"
+        ax.legend(loc=legend_loc, fontsize=9)
         ax.grid(False)
         ax.text(0.5, -0.10, plabel, transform=ax.transAxes,
                 ha="center", va="top", fontsize=12)
