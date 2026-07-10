@@ -15,6 +15,23 @@ import numpy as np
 from typing import Optional
 
 
+def d2_coeff_estim(c_hat: np.ndarray, c_exact: np.ndarray,
+                   max_j: Optional[int] = None) -> float:
+    """
+    Estimation-only coefficient distance (no truncation error), for Figures 1-3.
+
+    sqrt( Σ_{j=1}^{K} (ĉj - cj)² )   where K = min(max_j, N) if max_j given, else N.
+
+    This is what the paper plots on the y-axis ("square root distance"):
+      - "all coefficients":   max_j=None  → uses all N components
+      - "first 6 coefficients": max_j=6  → uses only j=1..min(6,N) components
+    """
+    N = len(c_hat)
+    K = min(max_j, N) if max_j is not None else N
+    diff = c_hat[:K] - c_exact[:K]
+    return float(np.sqrt(np.sum(diff**2)))
+
+
 def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray,
              c_exact_full: Optional[np.ndarray] = None) -> float:
     """
