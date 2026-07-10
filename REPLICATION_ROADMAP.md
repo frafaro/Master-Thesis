@@ -3,6 +3,22 @@
 
 ---
 
+## Implementation Status
+
+This roadmap has been **fully implemented** in `project/`. All 12 figures and Table 2 from
+Section 5 of Gambaro (2024) are reproduced. The key corrections applied during implementation:
+
+| Issue | Wrong (original plan) | Correct (implemented) |
+|---|---|---|
+| b vector formula | `b_N[i] = -sqrt(i-1) * m^h_{i-1}` | `b_N[i] = -sqrt(i-1) * m^h_{i-2}` |
+| d₂ coefficient distance | `Σ(ĉⱼ-cⱼ)²` (no sqrt, no truncation) | `sqrt(Σ(ĉⱼ-cⱼ)² + Σ_{j>N}cⱼ²)` |
+| NumPy compatibility | `np.trapezoid` (NumPy ≥ 2.0 only) | `np.trapz` (NumPy 1.26 compatible) |
+| Q_n computation | Monomial coefficient matrix (unstable) | Gauss-Hermite inner products (stable) |
+
+See `project/PIPELINE_DOCUMENTATION.md` for the full technical description of every module.
+
+---
+
 ## STEP 1 — Complete Computational Pipeline
 
 ```
@@ -358,13 +374,31 @@ This simplifies to a diagonal scaling.
 
 ### 5.5 Vector b_N
 
-**From eq. (15) in the paper:**
+**From eq. (15) in the paper (confirmed via hand-derivation and Appendix B 2D formula):**
 ```
-b_N[i] = -sqrt(i-1) * m^h_{i-1},   i = 1,...,N
+b_N[i] = -sqrt(i-1) * m^h_{i-2},   i = 1,...,N
 ```
-where m^h_0 = E[h_0(X*)] = E[1] = 1 (since h_0 = 1 everywhere).
+where the index is i-2 (NOT i-1). Special case: i=1 gives sqrt(0)=0 so b_N[1]=0 regardless.
 
-So b_N[1] = -sqrt(0)*m^h_0 = 0, b_N[2] = -sqrt(1)*m^h_1 = 0 (since X* is standardized, E[X*]=0 = m^h_1*sqrt(1!)), b_N[3] = -sqrt(2)*m^h_2 = 0 (since Var(X*)=1 means E[He_2(X*)]=0), and so on for higher order.
+**Derivation:** Integration by parts uses h'_{i-1}(x*) = sqrt(i-1) * h_{i-2}(x*).
+The resulting integral is E_p[h_{i-2}(X*)] = m^h_{i-2}.
+
+**Verification via Gaussian test:** for X* ~ N(0,1), m^h_k = delta_{k,0}:
+- b_N[1] = 0 (sqrt(0)=0)
+- b_N[2] = -1 * m^h_0 = -1
+- b_N[3] = -sqrt(2) * m^h_1 = 0
+- b_N[4] = -sqrt(3) * m^h_2 = 0
+Solving A c = b gives ĉ_2 = -1/sqrt(2), all others 0 — exactly the Gaussian CLR coefficients. ✓
+
+**Cross-check via Appendix B (2D formula):** the 2D analogue is b_{i,j} = -sqrt(i-1) * m^h_{i-2, j-1},
+which reduces to b_i = -sqrt(i-1) * m^h_{i-2} when j=1 (1D). ✓
+
+**Signal location for non-Gaussian distributions:** for a distribution with excess kurtosis κ,
+the first non-trivially non-zero higher moment is m^h_4 = κ/(2*sqrt(6)), which enters b_N[6]:
+```
+b_N[6] = -sqrt(5) * m^h_4
+```
+The kurtosis effect flows directly into ĉ_6, and into ĉ_4 only via off-diagonal coupling.
 
 **Derivation source:** Muscolino & Ricciardi (1999), *Computer Methods in Applied Mechanics and Engineering* 168(1), 121–133. Read this paper for the full derivation of the linear system from integration by parts of the Hermite derivative property.
 
@@ -387,7 +421,10 @@ So b_N[1] = -sqrt(0)*m^h_0 = 0, b_N[2] = -sqrt(1)*m^h_1 = 0 (since X* is standar
 1. Check residual ||A_N * c^_N - b_N|| / ||b_N|| < 10^{-10}
 2. For Hermite basis (A_N diagonal): c^_N[i] = b_N[i] / A_N[i,i]. Verify this analytically.
 
-**For Hermite basis only:** Since Q_n = I and A_N[i,n] = sqrt(n) * A~_N[i,n], and there is a further simplification via the diagonal structure of A~_N when j=n. Read Muscolino & Ricciardi (1999) to verify whether A_N is actually diagonal for the Hermite case, which would imply c^_j = -sqrt(j-1)*m^h_{j-1} / A_N[j,j].
+**For Hermite basis only:** Since Q_n = I, A_N[i,n] = sqrt(n) * A~_N[i,n]. The matrix A_N is
+NOT diagonal in general — off-diagonal terms couple different orders. For the Gaussian reference
+distribution (all m^h_k = 0 for k>=1), A~_N IS diagonal (A~_N[i,j] = (i-1)! * delta_{ij}),
+but for non-Gaussian distributions the off-diagonal mh contributions make A dense.
 
 ---
 
@@ -470,9 +507,12 @@ All distances are computed numerically via trapezoidal integration over the doma
 
 ### 9.1 Coefficient distance (eq. 17)
 ```
-d2(c^_N, c) = sum_{j=1}^{N} (c^_j - c_j)^2
+d2(c^_N, c) = sqrt( sum_{j=1}^{N} (c^_j - c_j)^2  +  sum_{j>N} c_j^2 )
 ```
-Purely arithmetic; no integration. Computed for N = 1, 2, ..., N_max (e.g., 20).
+The first term is the estimation error (how well ĉ_N approximates c_1,...,c_N).
+The second term is the truncation error (the tail of the exact series c_{N+1}, c_{N+2}, ...).
+Both terms are needed for eq. (17). The full benchmark series c_j is estimated from COS.
+Computed for N = 1, 2, ..., N_max (e.g., 20).
 
 ### 9.2 Aitchison distance (eq. 18)
 ```
