@@ -69,14 +69,14 @@ def hermite_basis_matrix(N: int) -> np.ndarray:
 
     Usata nel cambio di base Q^n = B^n * (H^n)^{-1}  (eq. 14 Gambaro 2024).
     """
-    H = np.zeros((N + 1, N + 1))
-    for i in range(N + 1):
+    H = np.zeros((N + 1, N + 1)) #crea una matrice di zeri con dimensione (N+1) x (N+1)
+    for i in range(N + 1):       #per ogni riga i della matrice, si calcola il vettore dei coefficienti monomiali di h_i(x)
         c = h_coeffs(i)          # vettore coefficienti di h_i, lunghezza i+1
-        H[i, :len(c)] = c        # copia nella riga i, zero-padding a destra
+        H[i, :len(c)] = c        # da la dimensione della riga i che deve essere lunga quanto h_i, e copia i coefficienti di h_i in questa riga
     return H
 
 
-def eval_hermite(x: np.ndarray, N: int) -> np.ndarray:
+def eval_hermite(x: np.ndarray, N: int) -> np.ndarray: #x vettore dei punti nel quale valutare i polinomi di Hermite, N grado massimo del polinomio
     """
     Valuta tutti i polinomi di Hermite normalizzati h_0,...,h_N in ogni punto di x.
     Restituisce un array di shape (N+1, len(x)): riga k = h_k valutato su tutta la griglia.
@@ -87,18 +87,23 @@ def eval_hermite(x: np.ndarray, N: int) -> np.ndarray:
 
     Ricorrenza normalizzata derivata da He_{k+1} = x*He_k - k*He_{k-1}:
         h_{k+1}(x) = [ x * h_k(x) - sqrt(k) * h_{k-1}(x) ] / sqrt(k+1)
+
+    la differenza con h_coeffs è che qui si valuta il polinomio in ogni punto della griglia x, mentre in h_coeffs restituisce i coefficienti monomiali.
+    ogni riga rappresenta un polinomio
+    ogni colonna rappresenta un punto della griglia x 
+
+    se N= 2 vuol dire che si hanno 3 polinomi: h_0, h_1, h_2, in base al valore di x si valuta il polinomio h_k(x) per ogni punto della griglia x.
     """
-    x = np.asarray(x, dtype=float)
-    n = len(x)
-    P = np.zeros((N + 1, n))
+    x = np.asarray(x, dtype=float) #x è un float ovvero un numero reale 
+    n = len(x) #n è il numero di punti della griglia x (colonne della matrice P)
+    P = np.zeros((N + 1, n)) #crea una matrice di zeri con dimensione (N+1) x n (righe x colonne)
     P[0] = 1.0          # h_0(x) = 1 per ogni x
     if N >= 1:
-        P[1] = x        # h_1(x) = x
-    for k in range(1, N):
+        P[1] = x        #dato che h_1(x) = x, si assegna il valore di x alla seconda riga della matrice P
+    for k in range(1, N): #inizia il ciclo for e si valuta il polinomio h_{k+1}(x) per ogni punto della griglia x
         # Ricorrenza: h_{k+1} = (x * h_k - sqrt(k) * h_{k-1}) / sqrt(k+1)
-        # Derivata da He_{k+1} = x*He_k - k*He_{k-1} diviso per sqrt((k+1)!)
-        P[k + 1] = (x * P[k] - sqrt(k) * P[k - 1]) / sqrt(k + 1)
-    return P
+        P[k + 1] = (x * P[k] - sqrt(k) * P[k - 1]) / sqrt(k + 1) #si valuta il polinomio h_{k+1}(x) per ogni punto della griglia x
+    return P #restituisce la matrice P
 
 
 def gaussian_weight(x: np.ndarray) -> np.ndarray:
