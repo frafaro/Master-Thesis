@@ -16,7 +16,7 @@ from math import comb
 from typing import Dict
 
 
-def characteristic_function(u: np.ndarray, params: Dict) -> np.ndarray:
+def characteristic_function(u: np.ndarray, params: Dict) -> np.ndarray: #set up della funzione caratteristica, u sono i valori che riceve per valutare la f, params resituisce i valori settati nel codice config.py
     """
     NIG characteristic function at array u.
     phi(u) = exp(i*u*mu*dt + (dt/kappa)*(1 - sqrt(1 + u^2*sigma^2*kappa - 2*i*u*theta*kappa)))
@@ -25,11 +25,11 @@ def characteristic_function(u: np.ndarray, params: Dict) -> np.ndarray:
     theta = params["theta"]
     sigma = params["sigma"]
     kappa = params["kappa"]
-    dt    = params.get("dt", 1.0)
-    u = np.asarray(u, dtype=complex)
-    inner = 1.0 + u**2 * sigma**2 * kappa - 2j * u * theta * kappa
+    dt    = params.get("dt", 1.0) #dt è il tempo di campionamento, se non è settato lo pone a 1.0
+    u = np.asarray(u, dtype=complex) #converte u in un vettore di numeri complessi
+    inner = 1.0 + u**2 * sigma**2 * kappa - 2j * u * theta * kappa #argomento dentro la radice quadrata NB: in python 1j è il numero complesso i e viene già definito come np.complex128(0, 1) di default
     # use principal branch of sqrt
-    return np.exp(1j * u * mu * dt + (dt / kappa) * (1.0 - np.sqrt(inner)))
+    return np.exp(1j * u * mu * dt + (dt / kappa) * (1.0 - np.sqrt(inner))) #funzione finale
 
 
 def log_cgf_deriv(s: float, params: Dict, order: int) -> float:
@@ -42,7 +42,7 @@ def log_cgf_deriv(s: float, params: Dict, order: int) -> float:
     sigma = params["sigma"]
     kappa = params["kappa"]
 
-    # g(s) = 1 - 2*theta*kappa*s - sigma^2*kappa*s^2
+    # g(s) = 1 - 2*theta*kappa*s - sigma^2*kappa*s^2 #argomento sotto la radice quadrata
     # K(s) = mu*s + (1/kappa)*(1 - sqrt(g(s)))
     # K^{(k)}(0) = mu*(k==1) + (1/kappa) * d^k/ds^k (1 - sqrt(g)) |_0
     #            = mu*(k==1) - (1/kappa) * d^k/ds^k sqrt(g) |_0
@@ -51,7 +51,7 @@ def log_cgf_deriv(s: float, params: Dict, order: int) -> float:
     gp   = -2.0 * theta * kappa       # g'(0)
     gpp  = -2.0 * sigma**2 * kappa    # g''(0)
 
-    def g_deriv(k):
+    def g_deriv(k): #restituisce i valori di g(s) derivati in s=0
         if k == 0: return g0
         if k == 1: return gp
         if k == 2: return gpp
@@ -61,7 +61,7 @@ def log_cgf_deriv(s: float, params: Dict, order: int) -> float:
     # Let h = sqrt(g), so h^2 = g.
     # Differentiate: 2*h*h' = g',  then recursively for higher orders.
     # d^k (h^2)/ds^k = g^{(k)}
-    # Using Leibniz rule on h*h:
+    # Using Leibniz rule on h*h: -> dimostrazione completa su appunti
     #   sum_{j=0}^{k} C(k,j) H[j]*H[k-j] = g_deriv(k)
     #   2*H[0]*H[k] + sum_{j=1}^{k-1} C(k,j)*H[j]*H[k-j] = g_deriv(k)
     #   H[k] = (g_deriv(k) - sum_{j=1}^{k-1} C(k,j)*H[j]*H[k-j]) / (2*H[0])
@@ -69,9 +69,9 @@ def log_cgf_deriv(s: float, params: Dict, order: int) -> float:
     H = np.zeros(order + 1)
     H[0] = np.sqrt(g0)  # = 1
     for k in range(1, order + 1):
-        rhs = g_deriv(k)
-        for j in range(1, k):
-            rhs -= comb(k, j) * H[j] * H[k - j]
+        rhs = g_deriv(k) #da mettere perchè nella derivata prima gp è il primo termine e non può essere calcolato con la formula di Leibniz
+        for j in range(1, k): #se j è dentro l'intervallo allora si calcola il valore di rhs come numeratore della formula di H[k]
+            rhs -= comb(k, j) * H[j] * H[k - j] #conosce già H[j] pk H[0] è il primo termine e non può essere calcolato con la formula di Leibniz
         H[k] = rhs / (2.0 * H[0])
 
     K_k = (mu if order == 1 else 0.0) - (1.0 / kappa) * H[order]
@@ -79,20 +79,25 @@ def log_cgf_deriv(s: float, params: Dict, order: int) -> float:
 
 
 def cumulants(params: Dict, max_order: int = 30) -> np.ndarray:
-    """Return array kappas[k] = k-th cumulant of NIG for k=1,...,max_order."""
+    """ 
+    creo vettore dei cumulanti richiamando la funzione preceente
+    """
     kappas = np.zeros(max_order + 1)
     for k in range(1, max_order + 1):
-        kappas[k] = log_cgf_deriv(0.0, params, k)
+        kappas[k] = log_cgf_deriv(0.0, params, k) 
     return kappas
 
 
 def raw_moments(params: Dict, max_order: int = 30) -> np.ndarray:
-    """Raw moments E[X^k] for k=0,...,max_order via moment-cumulant relation."""
+    """ definizione finale con i momenti e i cumulanti"""
     kappas = cumulants(params, max_order)
     return _cumulants_to_raw_moments(kappas, max_order)
 
 
 def _cumulants_to_raw_moments(kappas: np.ndarray, max_order: int) -> np.ndarray:
+    """
+    calcolo dei momenti usando la relazione tra momenti e cumulanti vedi appunti
+    """
     mu = np.zeros(max_order + 1)
     mu[0] = 1.0
     for n in range(1, max_order + 1):
