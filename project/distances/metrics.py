@@ -15,7 +15,7 @@ import numpy as np
 from typing import Optional
 
 
-def d2_coeff_estim(c_hat: np.ndarray, c_exact: np.ndarray,
+def d2_coeff_estim(c_hat: np.ndarray, c_exact: np.ndarray, #la f. sta ricevendo i coef stimati, i coef esatti e il max_j opzionale  per poter calcolare la distanza solo tra i primi max_j coefficienti
                    max_j: Optional[int] = None) -> float:
     """
     Estimation-only coefficient distance (no truncation error), for Figures 1-3.
@@ -26,10 +26,10 @@ def d2_coeff_estim(c_hat: np.ndarray, c_exact: np.ndarray,
       - "all coefficients":   max_j=None  → uses all N components
       - "first 6 coefficients": max_j=6  → uses only j=1..min(6,N) components
     """
-    N = len(c_hat)
-    K = min(max_j, N) if max_j is not None else N
-    diff = c_hat[:K] - c_exact[:K]
-    return float(np.sqrt(np.sum(diff**2)))
+    N = len(c_hat) #numero di coefficienti stimati
+    K = min(max_j, N) if max_j is not None else N #numero di coef da usare per il calcolo della distanza
+    diff = c_hat[:K] - c_exact[:K] #differenza tra i coef stimati e i coef esatti
+    return float(np.sqrt(np.sum(diff**2))) #calcolo della distanza 
 
 
 def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray,
@@ -38,7 +38,7 @@ def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray,
     Full coefficient distance (eq. 17):
         d₂(ĉN, c) = sqrt( Σ_{j=1}^N (ĉj - cj)² + Σ_{j>N} cj² )
 
-    where ĉN_j = ĉj for j≤N, ĉN_j = 0 for j>N.
+    where ĉN_j = ĉj for j≤N, ĉN_j = 0 for j>N. #se il vettore vero è più lungo dei coef stimati, si pone a 0 i coef che superano N
 
     Parameters
     ----------
@@ -51,17 +51,17 @@ def d2_coeff(c_hat: np.ndarray, c_exact: np.ndarray,
     -------
     d2 : scalar (the distance, already square-rooted)
     """
-    N = len(c_hat)
-    N_ex = len(c_exact)
-    c_ex = np.zeros(N)
-    c_ex[:min(N, N_ex)] = c_exact[:min(N, N_ex)]
+    N = len(c_hat) #coef stimati
+    N_ex = len(c_exact) #coef esatti
+    c_ex = np.zeros(N) #vettore di zeri con lunghezza N per poter confrontare con lo stesso numero di coef nei due vettori sennò non si può fare la differenza
+    c_ex[:min(N, N_ex)] = c_exact[:min(N, N_ex)] #assegna i coef esatti ai coef stimati fino al minimo tra N e N_ex
     estimation_sq = np.sum((c_hat - c_ex)**2)
 
-    truncation_sq = 0.0
-    if c_exact_full is not None and len(c_exact_full) > N:
-        truncation_sq = float(np.sum(c_exact_full[N:]**2))
+    truncation_sq = 0.0 
+    if c_exact_full is not None and len(c_exact_full) > N: #se i coef esatti risultano maggiori di N allora si calcola la distanza tra i coef stimati e i coef esatti più lunghi ponendo a 0 i coef che superano N
+        truncation_sq = float(np.sum(c_exact_full[N:]**2)) #prende i coef a partire da N+1 ovvero quelli che superano N
 
-    return float(np.sqrt(estimation_sq + truncation_sq))
+    return float(np.sqrt(estimation_sq + truncation_sq)) #calcolo della distanza con errore di troncamento
 
 
 def d_aitchison(x: np.ndarray,

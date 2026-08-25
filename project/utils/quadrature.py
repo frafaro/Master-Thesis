@@ -41,6 +41,10 @@ def clr_domain(log_p_func, cumulants: dict, L_start: float = 4.0,
     [k1-h, k1+h] where log(p(x)) > -clr_tol (ignoring the mean-shift correction,
     which is small; the dominant effect is p(x) -> 0 in the tails).
 
+    la funzione clr_domain non calcola il vero dominio basato sul clr completo, 
+    ma utilizza logp(x)>−10 come criterio numerico proxy per individuare una regione in cui la PDF 
+    rimane sufficientemente lontana da zero
+
     Parameters
     ----------
     log_p_func : callable x -> log(p(x)), evaluated on a fine grid
@@ -53,23 +57,34 @@ def clr_domain(log_p_func, cumulants: dict, L_start: float = 4.0,
     -------
     (a, b) : restricted domain endpoints
     """
-    a0, b0 = cumulant_domain(cumulants, L=L_start)
-    x = np.linspace(a0, b0, n_pts)
-    lp = log_p_func(x)
-    # require log(p) > -clr_tol  (equivalently p > exp(-10) ~ 4.5e-5)
-    valid = lp > -clr_tol
+    a0, b0 = cumulant_domain(cumulants, L=L_start) #richiama la f precedente per calcolare il dominio di integrazione con i valore default di L = 4.0
+    x = np.linspace(a0, b0, n_pts) #crea la griglia di punti di integrazione
+    lp = log_p_func(x) #valuta la funzione log(p(x)) sulla griglia di punti 
+    """
+    la funzione log_p_func è un paramentro di clr_domain, quest'ultima è chiamata in main.py per calcolare il dominio di integrazione (step14)
+    solo a quel punto viene creata effettivamente log_p_func come funzione anonima con la log_p_func(x) = log(p(x)). 
+    nel concreto questa funzione fa:
+    - valuta la densità benchmark COS di Heston nei punti x (usando la funzione caratteristica cf sul dominio pieno L=4)
+    - protezione numerica: se la densità è 0 nelle code, il log darebbe -inf; il floor a 10⁻³⁰⁰ lo evita
+    - restituisce log p_COS(x) 
+    (per il codice guardare main.py)
+    l'obiettivo è quello di trovare il sotto intervallo dove viene rispettata la condizione |clr(p)(x)| < 10 ovvero log(p(x)) > -10.
+    """
+    valid = lp > -clr_tol #restituisce un vettore di booleani dove True se log(p(x)) > -10, False altrimenti
     if not valid.any():
         raise ValueError("No valid domain found with |log(p)| < clr_tol")
-    a_restr = x[valid][0]
-    b_restr = x[valid][-1]
-    return float(a_restr), float(b_restr)
+    a_restr = x[valid][0] #prende il primo punto valido
+    b_restr = x[valid][-1] #prende l'ultimo punto valido
+    return float(a_restr), float(b_restr) #restituisce il dominio di integrazione ristretto
 
 
 def make_grid(a: float, b: float, n: int) -> np.ndarray:
-    """Uniform grid of n points on [a, b]."""
+    """Uniform grid of n points on [a, b].""" 
     return np.linspace(a, b, n)
 
 
 def trapz(f: np.ndarray, x: np.ndarray) -> float:
-    """Trapezoidal integration of f over x."""
+    """
+    Trapezoidal integration of f over x. Questa funzione è usata per calcolare l'integrale della funzione f sui punti x.
+    """
     return float(np.trapz(f, x))

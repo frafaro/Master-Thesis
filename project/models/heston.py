@@ -91,7 +91,11 @@ def cumulants_numerical(params: Dict, max_order: int = 30) -> np.ndarray:
     r       = float(params.get("r", 0.0))
 
     def K_mpmath(s):
-        """Log-MGF K(s) evaluated in mpmath arithmetic."""
+        """
+        Log-MGF K(s) evaluated in mpmath arithmetic.
+        in the first part we substitute u = -i*s as done for the other models. 
+        then we simplify the exponential term through the log. 
+        """
         iu = -s   # u = -i*s, so iu = i*u = i*(-i*s) = s  ... actually:
         # phi(u) with u = -i*s:  iu = i*u = i*(-i*s) = s
         iu = s    # because u = -i*s → i*u = i*(-i*s) = s
@@ -108,7 +112,7 @@ def cumulants_numerical(params: Dict, max_order: int = 30) -> np.ndarray:
                  (alpha - d) * T - 2 * mpmath.log(denom / denom0)
              ))
         B = (alpha - d) / xi**2 * (1 - exp_dT) / denom
-        return A + B * v0   # = log phi(u)
+        return A + B * v0   # = log phi(u), 
 
     kappas = np.zeros(max_order + 1)
 
