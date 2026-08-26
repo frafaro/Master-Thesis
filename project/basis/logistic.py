@@ -1,8 +1,16 @@
 """
 Logistic polynomial basis  (Heston & Rossi 2016).
 
-Polynomials L_0,...,L_N orthonormal w.r.t. the standard logistic weight:
-    nu_L(x) = exp(-x) / (1 + exp(-x))^2  (mean=0, variance=pi^2/3)
+Polynomials L_0,...,L_N orthonormal w.r.t. the STANDARDIZED logistic weight
+(Gambaro 2024, p. 2: "orthogonal polynomials based on the standardized
+logistic density", Heston & Rossi 2016):
+    nu_L(x) = sech^2(x/(2s)) / (4s),   s = sqrt(3)/pi
+    (mean=0, variance=1  -- consistent with the standardized variable x*)
+
+NOTE: the NON-standardized logistic (scale=1) has variance pi^2/3 ≈ 3.29,
+which is mismatched with x* (unit variance). Using it makes the exact
+Fourier coefficients c_j blow up at high j and the coefficient distance
+d2(c_hat, c) diverge, instead of staying < 1 as in Gambaro's Figs. 1-3.
 
 Algorithm:
   1. Stieltjes/Lanczos algorithm on a Gauss-Legendre quadrature grid to
@@ -23,8 +31,13 @@ Note: For symmetric nu_L, alpha_k = 0 for all k (verified numerically).
 """
 
 import numpy as np
-from math import sqrt
+from math import sqrt, pi
 from typing import Tuple
+
+# Scala della logistica standardizzata: s = sqrt(3)/pi rende la varianza = 1
+# (la logistica con scale=1 ha varianza pi^2/3; dividendo x per s si ottiene
+#  la "standardized logistic density" usata da Heston & Rossi 2016).
+_LOGISTIC_SCALE = sqrt(3.0) / pi
 
 """
 la quadratura serve per calcolare le norme ||pi_k||^2 = integral pi_k(x)^2 nu_L(x) dx, da questi si riva beta_k = ||pi_k||^2 / ||pi_{k-1}||^2
@@ -37,11 +50,15 @@ _N_QUAD    = 3000    # Gauss-Legendre points
 
 def logistic_weight(x: np.ndarray) -> np.ndarray:
     """
-    Restituisce il peso logistico standard nu_L(x) = sech^2(x/2) / 4.
-    la riscrivo in funzione di cosh(x/2) infatti vale la relazione sech^2(t) = 1/cosh^2(t)
+    Restituisce il peso logistico STANDARDIZZATO (media 0, varianza 1):
+        nu_L(x) = sech^2(x/(2s)) / (4s),  con s = sqrt(3)/pi.
+    La riscrivo in funzione di cosh infatti vale la relazione sech^2(t) = 1/cosh^2(t).
+    Il fattore 1/s davanti garantisce che l'integrale resti 1 (e' un cambio di
+    variabile della densita' logistica: nu_s(x) = nu(x/s)/s).
     """
     x = np.asarray(x, dtype=float) #x è un vettore contenente i punti nei quali si vuole valutare la funzione peso.
-    return 1.0 / (4.0 * np.cosh(x / 2.0)**2) #restituisce il valore di nu_L(x) per ogni punto della griglia x
+    s = _LOGISTIC_SCALE
+    return 1.0 / (4.0 * s * np.cosh(x / (2.0 * s))**2) #restituisce il valore di nu_L(x) per ogni punto della griglia x
 
 
 def _make_quad_grid(n_quad: int = _N_QUAD, lim: float = _INTEG_LIM): #n_quad: numero di punti della griglia, lim: limite di integrazione
