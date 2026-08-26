@@ -266,14 +266,6 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     # ── 10. Evaluate densities and CLR ────────────────────────────────────────
     print("  [10] Evaluating exponential expansion densities...")
 
-    def eval_hermite_N(N, x):
-        x_std = (x - m1) / sigma
-        return eval_hermite(x_std, N)
-
-    def eval_logistic_N(N, x):
-        x_std = (x - m1) / sigma
-        return eval_logistic(x_std, N, B_L_mat)
-
     def get_density_hermite(N, x, a, b):
         c_h = c_hats_hermite[N - 1]
         fn  = make_eval_hermite_std_fn(N)
