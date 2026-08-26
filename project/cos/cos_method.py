@@ -92,24 +92,26 @@ def benchmark_fourier_coeffs(cos_log_p: np.ndarray, #definito in main.py (164-16
     c : array of length N,  c[j-1] = c_j  (j=1,...,N)
     """
     x_std = (x - m1) / sigma
+    #calcolo delle basi ortogonali di hermite e logistic.
     P = eval_basis(x_std)  # (N+1, M) #matrice delle basi polinomiali eval_basis valuta sia hermite che logistic (hermite_basis e logistic_basis). 
 
     # E_nu[log p] = integral log(p(x)) * nu(x*)/sigma dx
     # nu_weight is already nu(x*)/sigma evaluated at x
-    E_log_p = np.trapz(cos_log_p * nu_weight, x)
+    E_log_p = np.trapz(cos_log_p * nu_weight, x) 
 
     # clr(p)(x) = log(p(x)) - E_nu[log p]
     clr_p = cos_log_p - E_log_p
 
+    #calcolo Fourier coefficients
     # c_j = integral clr_p(x) * phi_j(x*) * nu(x*)/sigma dx
-    c = np.zeros(N)
+    c = np.zeros(N) #vettore di zeri con lunghezza N per poter confrontare con lo stesso numero di coef nei due vettori sennò non si può fare la differenza
     for j in range(1, N + 1):
-        c[j - 1] = np.trapz(clr_p * P[j] * nu_weight, x)
+        c[j - 1] = np.trapz(clr_p * P[j] * nu_weight, x) #integrale del prodotto tra clr_p, la j-esima base polinomiale e il peso nu_weight sui punti x eq(9)
     return c
 
 
 def verify_cos_density(x: np.ndarray, p: np.ndarray,
-                       raw_moments_true: np.ndarray,
+                       raw_moments_true: np.ndarray, #
                        tol: float = 1e-4) -> bool:
     """
     Verify the COS density by checking:
@@ -118,16 +120,16 @@ def verify_cos_density(x: np.ndarray, p: np.ndarray,
       3. integral x^2 * p(x) dx ≈ mu_2
     """
     ok = True
-    integ = np.trapz(p, x)
-    if abs(integ - 1.0) > tol:
+    integ = np.trapz(p, x) #integrale della densità sui punti x
+    if abs(integ - 1.0) > tol: #la tolleranza è fissata a 0,0001 quindi se l'integrale non è 1 con una tolleranza di 0,0001 allora non è verificata la normalizzazione
         print(f"  COS density normalization: {integ:.6f}")
         ok = False
     mu1_num = np.trapz(x * p, x)
-    if abs(mu1_num - raw_moments_true[1]) > tol:
+    if abs(mu1_num - raw_moments_true[1]) > tol: #i raw_moments_true sono quelli delle distribuzioni vg, nig e heston quindi m1 è il primo momento e m2 è il secondo momento.
         print(f"  COS mean: {mu1_num:.6f} vs {raw_moments_true[1]:.6f}")
         ok = False
     mu2_num = np.trapz(x**2 * p, x)
-    if abs(mu2_num - raw_moments_true[2]) > 10 * tol:
+    if abs(mu2_num - raw_moments_true[2]) > 10 * tol: #tolleranza è 0,001
         print(f"  COS E[X^2]: {mu2_num:.6f} vs {raw_moments_true[2]:.6f}")
         ok = False
     return ok

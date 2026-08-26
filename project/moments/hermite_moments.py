@@ -41,12 +41,12 @@ def standardize_moments(raw_mu: np.ndarray) -> np.ndarray:
     -------
     std_mu : array of length K+1, std_mu[k] = E[(X*)^k]
     """
-    m1    = raw_mu[1]
+    m1    = raw_mu[1] #definisco media
     m2    = raw_mu[2]
-    sigma = sqrt(m2 - m1**2)
+    sigma = sqrt(m2 - m1**2) #definisco deviazione standard
 
-    K = len(raw_mu) - 1
-    # Central moments of X: bar_mu[k] = E[(X - m1)^k]
+    K = len(raw_mu) - 1 #numero massimo di momenti centrati
+    # Central moments of X: bar_mu[k] = E[(X - m1)^k], calcolo dei momenti centrati tramite il binomio di Newton non ancora standardizzato
     bar_mu = np.zeros(K + 1)
     for k in range(K + 1):
         s = 0.0
@@ -57,7 +57,7 @@ def standardize_moments(raw_mu: np.ndarray) -> np.ndarray:
     # Standardized moments: mu*[k] = bar_mu[k] / sigma^k
     std_mu = np.zeros(K + 1)
     for k in range(K + 1):
-        std_mu[k] = bar_mu[k] / sigma**k if k > 0 else 1.0
+        std_mu[k] = bar_mu[k] / sigma**k if k > 0 else 1.0 #std_mu è il vettore dei momenti standardizzati
 
     return std_mu, m1, sigma
 
@@ -84,16 +84,16 @@ def hermite_moments_from_raw(raw_mu: np.ndarray, K_max: int = None) -> np.ndarra
     if K_max is None:
         K_max = len(raw_mu) - 1
 
-    std_mu, m1, sigma = standardize_moments(raw_mu)
+    std_mu, m1, sigma = standardize_moments(raw_mu) #richiama la funzione preceente per standardizzare i momenti
 
-    mh = np.zeros(K_max + 1)
-    mh[0] = 1.0  # h_0 = 1, E[1] = 1
+    mh = np.zeros(K_max + 1) #vettore di zeri con lunghezza K_max + 1 per poter confrontare con lo stesso numero di momenti nei due vettori sennò non si può fare la differenza
+    mh[0] = 1.0  # h_0 = 1, E[1] = 1 quindi il primo momento è 1
 
     for k in range(1, K_max + 1):
         coeffs = He_coeffs(k)  # monomial coefficients of He_k
         # E[He_k(X*)] = sum_j coeffs[j] * mu*[j]
-        he_expect = sum(coeffs[j] * std_mu[j] for j in range(len(coeffs)))
-        mh[k] = he_expect / sqrt(factorial(k))
+        he_expect = sum(coeffs[j] * std_mu[j] for j in range(len(coeffs))) #somma dei prodotti tra i coefficienti della k-esima base polinomiale e i momenti standardizzati
+        mh[k] = he_expect / sqrt(factorial(k))  #normalizzazione del momento centrato
 
     return mh, m1, sigma
 
