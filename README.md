@@ -30,7 +30,7 @@ p̂_N(x) = Ĉ₀ · exp( Σ_{j=1}^N ĉⱼ · φⱼ(x*) )
 dove `x* = (x − m₁)/σ` è la variabile standardizzata e `{φⱼ}` è una delle due basi testate:
 
 - **Base Hermite**: `φⱼ = hⱼ` (polinomi di Hermite probabilistici normalizzati), ortonormali rispetto al peso gaussiano `ω(x*) = e^{−x*²/2}/√(2π)`
-- **Base Logistica**: `{Lⱼ}` (polinomi ortonormali rispetto al peso logistico `ν_L(x*) = sech²(x*/2)/4`, con varianza π²/3) [Heston & Rossi 2016]
+- **Base Logistica**: `{Lⱼ}` (polinomi ortonormali rispetto al peso logistico **standardizzato**, media 0 e varianza 1) [Heston & Rossi 2016; Gambaro 2024, p. 2]
 
 Il framework matematico è il **Bayesian Hilbert Space** B²(I, ν) [Gambaro 2024, §2], dove la geometria è definita dalla **CLR transform** (centered log-ratio):
 
@@ -254,16 +254,17 @@ h'_j(x*) = √j · h_{j-1}(x*)
 
 #### Base Logistica (`basis/logistic.py`)
 
-Peso logistico standard [Heston & Rossi 2016]:
+Peso logistico **standardizzato** [Heston & Rossi 2016; Gambaro 2024, p. 2: *"orthogonal polynomials based on the standardized logistic density"*]:
 ```
-ν_L(x) = sech²(x/2)/4    (media=0, varianza=π²/3)
+ν_L(x) = sech²(x/(2s)) / (4s)    con s = √3 / π
+(media=0, varianza=1 — coerente con la variabile standardizzata x*)
 ```
 
 **Algoritmo: Stieltjes/Lanczos** [Gautschi 1982] — evita la matrice di Hankel mal condizionata. Fornisce la ricorrenza a tre termini (α_k, β_k) su una griglia di 3000 punti Gauss-Legendre adattata a ν_L:
 ```
 L_{k+1}(x) = [(x − αₖ)·Lₖ(x) − √βₖ·L_{k-1}(x)] / √β_{k+1}
 ```
-Per simmetria di ν_L: αₖ = 0 per ogni k. Verificato: β₁ = π²/3 ≈ 3.2899 (varianza della distribuzione logistica).
+Per simmetria di ν_L: αₖ = 0 per ogni k. Verificato: β₁ = 1 (varianza della logistica standardizzata). Dettaglio e motivazione: §9.
 
 ---
 
@@ -407,6 +408,15 @@ models/                                                             │
 ### Correzione formula Ã_N
 La formula corretta usa `Δ/√(p!q!r!)` con momenti **normalizzati** mʰ (non `(1/k!)·Δ`). La versione errata gonfiava le entrate diagonali (es. Ã[3,3] = 2.408 invece del corretto 2.000 per VG) e produceva coefficienti ĉ più piccoli del vero. La correzione ha ridotto l'errore ‖ĉ − c_true‖ di **1.8× per VG**.
 
+### Logistica: peso standardizzato [Heston & Rossi 2016]
+Gambaro (2024, p. 2) adotta i polinomi ortogonali *"based on the standardized logistic density"* di Heston & Rossi (2016). Il peso va quindi riscalato alla **varianza 1**, come la variabile `x*` su cui vive l'espansione:
+
+```
+ν_L(x) = sech²(x/(2s)) / (4s),    s = √3 / π
+```
+
+La logistica con scala 1 (varianza π²/3 ≈ 3.29) è incompatibile con `x*`: i coefficienti Fourier esatti `cⱼ` esplodono al crescere di `j` e la distanza `d₂(ĉ_N, c)` diverge (es. 392 a N=16 per VG) invece di restare sotto 1 come nelle Figure 1–3 del paper. Con la standardizzazione, per VG a N=16: `d₂(ĉ, c) ≈ 0.05` e Aitchison 0.21 → 0.09. Le distanze L1/L2/log-L2 sulla densità restano identiche (stesso span polinomiale fino a N).
+
 ### Logistica: perché Stieltjes e non Gram-Schmidt
 La matrice di Hankel dei momenti è estremamente mal condizionata per grado ≥ 10 (cancellazione catastrofica). L'algoritmo di Stieltjes [Gautschi 1982] opera direttamente sulla griglia di quadratura e rimane stabile per qualsiasi N.
 
@@ -422,8 +432,8 @@ Il benchmark COS usa N_COS = 2¹² = 4096 termini [Fang & Oosterlee 2009]. La CF
 ### Perché la kurtosi entra in b_N all'indice 6 (non 4)
 Per una distribuzione standardizzata: mʰ₀=1, mʰ₁=0, mʰ₂=0 sempre (per definizione di media=0 e varianza=1). Il primo momento superiore non banalmente non nullo per kurtosi κ è `mʰ₄ = κ/(2√6)`, che entra in `b_N[6] = −√5 · mʰ₄`. Quindi la **kurtosi guida ĉ₆ direttamente** e ĉ₄ solo tramite accoppiamento fuori-diagonale.
 
-### Perché le distanze Logistiche sono maggiori di Hermite
-La base Logistica ha `Q[n,n] → 0` rapidamente all'aumentare di n (i polinomi logistici si proiettano debolmente sulla base Hermite). Questo rende le entrate diagonali della matrice A piccole, causando errori di stima maggiori per ĉ_N nel caso Logistico. È una proprietà matematica dell'overlap Logistica–Hermite, non un problema implementativo.
+### Perché le distanze Logistiche restano più grandi di Hermite (dopo la standardizzazione)
+Con il peso a varianza 1, `Q[n,n]` non collassa più a zero ai gradi bassi e i coefficienti VG/NIG convergono come nel paper. Resta invece più mal condizionato il sistema a N alti (soprattutto Heston sul dominio pieno, Fig. 8): l'overlap Logistica–Hermite decade comunque al crescere di n, e i momenti di Hermite di ordine alto per Heston (skewness −1.2, kurtosi 2.5) sono calcolati numericamente. È un limite numerico del cambio di base, non della definizione del peso.
 
 ---
 
@@ -466,7 +476,7 @@ Impostando j=1 (caso 1D, `mʰ_{k,0} = mʰₖ`) si ottiene esattamente `b_i = −
 
 2. **Momenti NIG:** con i parametri dell'Appendice A otteniamo skewness≈0.223 e kurtosi≈0.966 vs i valori arrotondati 0.2 e 1 della Tabella 1 del paper. Discrepanza attesa: il paper arrotonda a 1 decimale.
 
-3. **Convergenza Logistica ad alto N:** il sistema lineare diventa mal condizionato per la base Logistica a N≥17 (cond(A) > 10¹⁴). Si usa least-squares come fallback. Il paper non affronta esplicitamente questo caso.
+3. **Convergenza Logistica ad alto N:** il sistema lineare diventa mal condizionato per la base Logistica a N≥17 (cond(A) > 10¹⁴). Si usa least-squares come fallback. Il paper non affronta esplicitamente questo caso. Per Heston sul dominio pieno (L=4) la serie logistica resta instabile oltre N≈9, mentre nel paper converge fino a N=16: sospetto residuo sui momenti di Hermite di ordine alto (via mpmath), non sul peso della base.
 
 4. **Parametri VG:** i valori sigma=0.2, nu=2/3, theta=0, mu=0 sono inferiti dal vincolo "skewness=0, kurtosi eccesso=2" (poiché kurtosi eccesso = 3ν → ν=2/3). Il paper cita Heston & Rossi (2016) senza listare i parametri esplicitamente.
 
