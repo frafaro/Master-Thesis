@@ -72,7 +72,7 @@ PDF e PNG vengono salvati in `project/output/`.
 | 11–12 | PDF & log-PDF, dominio ristretto e completo | Heston |
 | Tabella 2 | Tempi CPU: COS, Hermite N=16, Logistica N=16 | Tutti e tre |
 
-Le Figure 1–12 con suffisso `_c_hat` usano ĉ dal sistema lineare. Le Figure 5–12 con suffisso `_c_fourier` usano i cⱼ Fourier (eq. 9). I file senza suffisso sono identici a `_c_hat`.
+Tutte le figure senza suffisso usano i coefficienti stimati ĉ del sistema lineare [eq. 15–16]. Solo le Figure 8 e 12 hanno una copia extra `_c_fourier`, costruita con i cⱼ Fourier esatti [eq. 9]. Motivo: sul dominio Heston L=4 il sistema per ĉ è numericamente instabile (Ĉ₀ underflow, distanze NaN o esplose a N≥10), mentre le figure di Gambaro mostrano la Logistica che continua a decrescere fino a N=16 con distanze ≪ 1. I cⱼ Fourier riproducono quel comportamento e una densità Logistica usabile (Fig. 12); non sostituiscono lo stimatore da momenti, servono solo come confronto su quel caso patologico.
 
 ---
 
@@ -319,7 +319,7 @@ p̂_N(x) = Ĉ₀ · exp( Σ_{j=1}^N ĉⱼ · φⱼ(x*) ),    x* = (x − m₁)/�
 ```
 con I* = [(a−m₁)/σ, (b−m₁)/σ] (stesso [a, b] dello Step 3, solo standardizzato). **Metodo numerico:** regola dei trapezi su 20.000 punti uniformi in I*. Trick log-sum-exp per evitare overflow: sottrae max(f) prima di esponenziare, compensa poi.
 
-`eval_density` valuta la PDF sulla griglia. Ogni figura 1–12 è salvata anche con suffisso `_c_hat` (ĉ del sistema lineare, eq. 16). In più, le Figure 5–12 sono generate una seconda volta con i coefficienti Fourier esatti cⱼ dell'eq. 9 (suffisso `_c_fourier`): lì Hermite e Logistica sono due serie diverse. I PDF senza suffisso coincidono con `_c_hat`.
+`eval_density` valuta la PDF sulla griglia. Le Figure 1–12 usano i ĉ del sistema lineare [eq. 16]. Le sole Figure 8 e 12 sono salvate anche con i cⱼ Fourier [eq. 9] (suffisso `_c_fourier`): su Heston L=4 ĉ esplode numericamente, mentre la serie di Fourier resta confrontabile con le figure di Gambaro (vedi indice, §4).
 
 ---
 
