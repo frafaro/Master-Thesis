@@ -44,6 +44,11 @@ def _save(fig, name: str):
     print(f"  Saved: {path}")
 
 
+def _fig_filename(fig_num: int, kind: str, model_name: str, suffix: str = "") -> str:
+    tag = f"_{suffix}" if suffix else ""
+    return f"figure_{fig_num:02d}_{kind}_{model_name.lower()}{tag}.pdf"
+
+
 # ── Figures 1-3: coefficient convergence ─────────────────────────────────────
 
 def fig_coeff_convergence(d2_hermite_first6: np.ndarray,
@@ -52,7 +57,8 @@ def fig_coeff_convergence(d2_hermite_first6: np.ndarray,
                           d2_logistic_all:    np.ndarray,
                           N_vals: np.ndarray,
                           model_name: str,
-                          fig_num: int):
+                          fig_num: int,
+                          suffix: str = ""):
     """
     Figure fig_num (1, 2, or 3) — layout matching Gambaro (2024) Fig. 1.
 
@@ -104,14 +110,15 @@ def fig_coeff_convergence(d2_hermite_first6: np.ndarray,
         ax.grid(False)
 
     fig.tight_layout()
-    _save(fig, f"figure_{fig_num:02d}_coeff_{model_name.lower()}.pdf")
+    _save(fig, _fig_filename(fig_num, "coeff", model_name, suffix))
 
 
 # ── Figure 4: CLR of three PDFs ──────────────────────────────────────────────
 
 def fig4_clr(x_vg: np.ndarray,  clr_vg: np.ndarray,
              x_nig: np.ndarray, clr_nig: np.ndarray,
-             x_heston: np.ndarray, clr_heston: np.ndarray):
+             x_heston: np.ndarray, clr_heston: np.ndarray,
+             suffix: str = ""):
     """
     Figure 4: CLR of VG, NIG, Heston standardized PDFs on domain with L=4.
     Horizontal tolerance lines at y = ±10.
@@ -129,7 +136,8 @@ def fig4_clr(x_vg: np.ndarray,  clr_vg: np.ndarray,
     ax.legend()
     ax.grid(True, linestyle=":", alpha=0.6)
     fig.tight_layout()
-    _save(fig, "figure_04_clr_three_pdfs.pdf")
+    tag = f"_{suffix}" if suffix else ""
+    _save(fig, f"figure_04_clr_three_pdfs{tag}.pdf")
 
 
 # ── Figures 5-8: density convergence distances ───────────────────────────────
@@ -139,7 +147,8 @@ def fig_density_distances(dist_hermite: Dict[str, np.ndarray],
                           N_vals: np.ndarray,
                           model_name: str,
                           fig_num: int,
-                          logistic_only: bool = False):
+                          logistic_only: bool = False,
+                          suffix: str = ""):
     """
     4-subplot figure matching Gambaro (2024) Figs 5-8 layout exactly.
 
@@ -192,7 +201,7 @@ def fig_density_distances(dist_hermite: Dict[str, np.ndarray],
                 ha="center", va="top", fontsize=12)
 
     fig.tight_layout(rect=[0, 0.02, 1, 1])
-    _save(fig, f"figure_{fig_num:02d}_distances_{model_name.lower()}.pdf")
+    _save(fig, _fig_filename(fig_num, "distances", model_name, suffix))
 
 
 # ── Figures 9-12: density comparison at fixed N ──────────────────────────────
@@ -205,7 +214,8 @@ def fig_density_comparison(x: np.ndarray,
                            p_logistic_16: np.ndarray,
                            model_name: str,
                            fig_num: int,
-                           show_hermite: bool = True):
+                           show_hermite: bool = True,
+                           suffix: str = ""):
     """
     4-subplot figure matching Gambaro (2024) Figs 9-12 layout exactly.
 
@@ -275,7 +285,7 @@ def fig_density_comparison(x: np.ndarray,
                 ha="center", va="top", fontsize=12)
 
     fig.tight_layout(rect=[0, 0.02, 1, 1])
-    _save(fig, f"figure_{fig_num:02d}_density_{model_name.lower()}.pdf")
+    _save(fig, _fig_filename(fig_num, "density", model_name, suffix))
 
 
 # ── Table 2: CPU times ────────────────────────────────────────────────────────

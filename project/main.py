@@ -260,58 +260,85 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     fig_coeff_convergence(
         d2_h_first6, d2_h_all,
         d2_l_first6, d2_l_all,
-        N_vals, model_name, fig_nums["coeff"]
+        N_vals, model_name, fig_nums["coeff"],
+    )
+    fig_coeff_convergence(
+        d2_h_first6, d2_h_all,
+        d2_l_first6, d2_l_all,
+        N_vals, model_name, fig_nums["coeff"],
+        suffix="c_hat",
     )
 
-    # ── 10. Evaluate densities and CLR ────────────────────────────────────────
+    # ── 10. Density builders: ĉ (system) and c (Fourier eq. 9) ────────────────
     print("  [10] Evaluating exponential expansion densities...")
 
-    def get_density_hermite(N, x, a, b):
+    def get_density_hat_hermite(N, x, a, b):
         c_h = c_hats_hermite[N - 1]
-        fn  = make_eval_hermite_std_fn(N)
-        C0  = compute_C0(c_h, fn, a, b, m1, sigma)
+        fn = make_eval_hermite_std_fn(N)
+        C0 = compute_C0(c_h, fn, a, b, m1, sigma)
         return eval_density(x, c_h, C0, fn, m1, sigma)
 
-    def get_density_logistic(N, x, a, b):
+    def get_density_hat_logistic(N, x, a, b):
         c_l = c_hats_logistic[N - 1]
-        fn  = make_eval_logistic_std_fn(alpha_L, beta_L, N)
-        C0  = compute_C0(c_l, fn, a, b, m1, sigma)
+        fn = make_eval_logistic_std_fn(alpha_L, beta_L, N)
+        C0 = compute_C0(c_l, fn, a, b, m1, sigma)
+        return eval_density(x, c_l, C0, fn, m1, sigma)
+
+    def get_density_fou_hermite(N, x, a, b, c_vec=None):
+        c_h = (c_exact_hermite if c_vec is None else c_vec)[:N]
+        fn = make_eval_hermite_std_fn(N)
+        C0 = compute_C0(c_h, fn, a, b, m1, sigma)
+        return eval_density(x, c_h, C0, fn, m1, sigma)
+
+    def get_density_fou_logistic(N, x, a, b, c_vec=None):
+        c_l = (c_exact_logistic if c_vec is None else c_vec)[:N]
+        fn = make_eval_logistic_std_fn(alpha_L, beta_L, N)
+        C0 = compute_C0(c_l, fn, a, b, m1, sigma)
         return eval_density(x, c_l, C0, fn, m1, sigma)
 
     # ── 11. Figure 4: CLR ─────────────────────────────────────────────────────
     # (CLR figure is assembled in the calling loop after all models are run)
 
-    # ── 12. Density convergence distances (full domain) ───────────────────────
-    print("  [12] Computing density convergence distances (full domain)...")
-    dist_h_full  = {k: [] for k in ["aitchison", "log_l2", "l1", "l2"]}
-    dist_l_full  = {k: [] for k in ["aitchison", "log_l2", "l1", "l2"]}
+    def _collect_dists(get_h, get_l, x, a, b, p_cos, nu_h, nu_l, c_h=None, c_l=None):
+        dist_h = {k: [] for k in ["aitchison", "log_l2", "l1", "l2"]}
+        dist_l = {k: [] for k in ["aitchison", "log_l2", "l1", "l2"]}
+        for N in N_vals:
+            if c_h is None:
+                ph = get_h(N, x, a, b)
+                pl = get_l(N, x, a, b)
+            else:
+                ph = get_h(N, x, a, b, c_h)
+                pl = get_l(N, x, a, b, c_l)
+            dh = all_distances(x, ph, p_cos, nu_h)
+            dl = all_distances(x, pl, p_cos, nu_l)
+            for k in dh:
+                dist_h[k].append(dh[k])
+                dist_l[k].append(dl[k])
+        for k in dist_h:
+            dist_h[k] = np.array(dist_h[k])
+            dist_l[k] = np.array(dist_l[k])
+        return dist_h, dist_l
 
-    for N in N_vals:
-        ph = get_density_hermite(N,  x_full, a_full, b_full)
-        pl = get_density_logistic(N, x_full, a_full, b_full)
-        dh = all_distances(x_full, ph, p_cos_full, nu_gauss)
-        dl = all_distances(x_full, pl, p_cos_full, nu_logis)
-        for k in dh:
-            dist_h_full[k].append(dh[k])
-            dist_l_full[k].append(dl[k])
+    def _save_dist_full(dist_h, dist_l, suffix):
+        title = model_name if not is_heston else model_name + " (L=4)"
+        fig_density_distances(dist_h, dist_l, N_vals, title, fig_nums["dist_full"],
+                              logistic_only=is_heston, suffix=suffix)
 
-    for k in dist_h_full:
-        dist_h_full[k] = np.array(dist_h_full[k])
-        dist_l_full[k] = np.array(dist_l_full[k])
-
-    # ── 13. Figures 5/6/8 (full domain) ──────────────────────────────────────
-    if not is_heston:
-        fig_density_distances(dist_h_full, dist_l_full, N_vals,
-                              model_name, fig_nums["dist_full"])
-    else:
-        # Fig 8: Heston full domain, logistic only
-        fig_density_distances(dist_h_full, dist_l_full, N_vals,
-                              model_name + " (L=4)", fig_nums["dist_full"],
-                              logistic_only=True)
+    # ── 12-13. Figures 5/6/8: c_hat and c_fourier ────────────────────────────
+    print("  [12] Density distances (full domain), ĉ and Fourier c...")
+    dist_h_hat, dist_l_hat = _collect_dists(
+        get_density_hat_hermite, get_density_hat_logistic,
+        x_full, a_full, b_full, p_cos_full, nu_gauss, nu_logis)
+    dist_h_fou, dist_l_fou = _collect_dists(
+        get_density_fou_hermite, get_density_fou_logistic,
+        x_full, a_full, b_full, p_cos_full, nu_gauss, nu_logis)
+    _save_dist_full(dist_h_hat, dist_l_hat, "c_hat")
+    _save_dist_full(dist_h_fou, dist_l_fou, "c_fourier")
+    _save_dist_full(dist_h_hat, dist_l_hat, "")   # unsuffixed = c_hat (original)
 
     # ── 14. Figures 7/11 (Heston restricted domain) ──────────────────────────
     if is_heston and fig_nums.get("dist_restr") is not None:
-        print("  [14] Computing restricted-domain distances for Heston...")
+        print("  [14] Restricted-domain distances for Heston...")
         a_restr, b_restr = clr_domain(
             lambda x: np.log(np.maximum(cos_density(x, cf, a_full, b_full, N_COS), 1e-300)),
             cumulants_dict, L_start=L, clr_tol=CFG.CLR_TOL)
@@ -321,47 +348,68 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
         nu_logis_restr = logistic_weight_original(x_restr, m1, sigma)
         print(f"      Restricted domain: [{a_restr:.3f}, {b_restr:.3f}]")
 
-        dist_h_restr = {k: [] for k in ["aitchison", "log_l2", "l1", "l2"]}
-        dist_l_restr = {k: [] for k in ["aitchison", "log_l2", "l1", "l2"]}
-        for N in N_vals:
-            ph = get_density_hermite(N,  x_restr, a_restr, b_restr)
-            pl = get_density_logistic(N, x_restr, a_restr, b_restr)
-            dh = all_distances(x_restr, ph, p_cos_restr, nu_gauss_restr)
-            dl = all_distances(x_restr, pl, p_cos_restr, nu_logis_restr)
-            for k in dh:
-                dist_h_restr[k].append(dh[k])
-                dist_l_restr[k].append(dl[k])
-        for k in dist_h_restr:
-            dist_h_restr[k] = np.array(dist_h_restr[k])
-            dist_l_restr[k] = np.array(dist_l_restr[k])
+        log_p_restr = np.log(np.maximum(p_cos_restr, 1e-300))
+        c_exact_h_restr = benchmark_fourier_coeffs(
+            log_p_restr, x_restr, eval_h_std, nu_gauss_restr, m1, sigma, N_MAX)
+        c_exact_l_restr = benchmark_fourier_coeffs(
+            log_p_restr, x_restr, eval_l_std, nu_logis_restr, m1, sigma, N_MAX)
 
-        fig_density_distances(dist_h_restr, dist_l_restr, N_vals,
-                              model_name + " (restricted domain)",
-                              fig_nums["dist_restr"])
+        dist_h_hat_r, dist_l_hat_r = _collect_dists(
+            get_density_hat_hermite, get_density_hat_logistic,
+            x_restr, a_restr, b_restr, p_cos_restr, nu_gauss_restr, nu_logis_restr)
+        dist_h_fou_r, dist_l_fou_r = _collect_dists(
+            get_density_fou_hermite, get_density_fou_logistic,
+            x_restr, a_restr, b_restr, p_cos_restr, nu_gauss_restr, nu_logis_restr,
+            c_exact_h_restr, c_exact_l_restr)
+
+        title_r = model_name + " (restricted domain)"
+        for dist_h, dist_l, suf in (
+            (dist_h_hat_r, dist_l_hat_r, "c_hat"),
+            (dist_h_fou_r, dist_l_fou_r, "c_fourier"),
+            (dist_h_hat_r, dist_l_hat_r, ""),
+        ):
+            fig_density_distances(dist_h, dist_l, N_vals, title_r,
+                                  fig_nums["dist_restr"], suffix=suf)
 
     # ── 15. Density comparison figures (N=6 and N=16) ─────────────────────────
     print("  [15] Generating density comparison figures...")
     N6, N16 = CFG.N_FIXED
 
-    ph6  = get_density_hermite(N6,   x_full, a_full, b_full)
-    ph16 = get_density_hermite(N16,  x_full, a_full, b_full)
-    pl6  = get_density_logistic(N6,  x_full, a_full, b_full)
-    pl16 = get_density_logistic(N16, x_full, a_full, b_full)
+    def _save_dens_full(get_h, get_l, suffix, c_h=None, c_l=None):
+        if c_h is None:
+            ph6, ph16 = get_h(N6, x_full, a_full, b_full), get_h(N16, x_full, a_full, b_full)
+            pl6, pl16 = get_l(N6, x_full, a_full, b_full), get_l(N16, x_full, a_full, b_full)
+        else:
+            ph6, ph16 = get_h(N6, x_full, a_full, b_full, c_h), get_h(N16, x_full, a_full, b_full, c_h)
+            pl6, pl16 = get_l(N6, x_full, a_full, b_full, c_l), get_l(N16, x_full, a_full, b_full, c_l)
+        fig_density_comparison(x_full, p_cos_full, ph6, ph16, pl6, pl16,
+                               model_name, fig_nums["dens_full"],
+                               show_hermite=(not is_heston), suffix=suffix)
 
-    # Fig 12 (Heston full domain): Hermite diverges on wide domain → omit it
-    fig_density_comparison(x_full, p_cos_full,
-                           ph6, ph16, pl6, pl16,
-                           model_name, fig_nums["dens_full"],
-                           show_hermite=(not is_heston))
+    _save_dens_full(get_density_hat_hermite, get_density_hat_logistic, "c_hat")
+    _save_dens_full(get_density_fou_hermite, get_density_fou_logistic, "c_fourier")
+    _save_dens_full(get_density_hat_hermite, get_density_hat_logistic, "")
 
     if is_heston and fig_nums.get("dens_restr") is not None:
-        ph6_r  = get_density_hermite(N6,   x_restr, a_restr, b_restr)
-        ph16_r = get_density_hermite(N16,  x_restr, a_restr, b_restr)
-        pl6_r  = get_density_logistic(N6,  x_restr, a_restr, b_restr)
-        pl16_r = get_density_logistic(N16, x_restr, a_restr, b_restr)
-        fig_density_comparison(x_restr, p_cos_restr,
-                               ph6_r, ph16_r, pl6_r, pl16_r,
-                               model_name + " (restricted)", fig_nums["dens_restr"])
+        def _save_dens_restr(get_h, get_l, suffix, c_h=None, c_l=None):
+            if c_h is None:
+                ph6 = get_h(N6, x_restr, a_restr, b_restr)
+                ph16 = get_h(N16, x_restr, a_restr, b_restr)
+                pl6 = get_l(N6, x_restr, a_restr, b_restr)
+                pl16 = get_l(N16, x_restr, a_restr, b_restr)
+            else:
+                ph6 = get_h(N6, x_restr, a_restr, b_restr, c_h)
+                ph16 = get_h(N16, x_restr, a_restr, b_restr, c_h)
+                pl6 = get_l(N6, x_restr, a_restr, b_restr, c_l)
+                pl16 = get_l(N16, x_restr, a_restr, b_restr, c_l)
+            fig_density_comparison(x_restr, p_cos_restr, ph6, ph16, pl6, pl16,
+                                   model_name + " (restricted)", fig_nums["dens_restr"],
+                                   suffix=suffix)
+
+        _save_dens_restr(get_density_hat_hermite, get_density_hat_logistic, "c_hat")
+        _save_dens_restr(get_density_fou_hermite, get_density_fou_logistic, "c_fourier",
+                         c_exact_h_restr, c_exact_l_restr)
+        _save_dens_restr(get_density_hat_hermite, get_density_hat_logistic, "")
 
     # Return data needed for Figure 4
     x_std_full = (x_full - m1) / sigma
@@ -426,6 +474,12 @@ def main(args):
             clr_data["VG"]["x_std"],     clr_data["VG"]["clr"],
             clr_data["NIG"]["x_std"],    clr_data["NIG"]["clr"],
             clr_data["Heston"]["x_std"], clr_data["Heston"]["clr"],
+        )
+        fig4_clr(
+            clr_data["VG"]["x_std"],     clr_data["VG"]["clr"],
+            clr_data["NIG"]["x_std"],    clr_data["NIG"]["clr"],
+            clr_data["Heston"]["x_std"], clr_data["Heston"]["clr"],
+            suffix="c_hat",
         )
 
     # ── Table 2 ─────────────────────────────────────────────────────────────

@@ -89,10 +89,10 @@ def d_aitchison(x: np.ndarray,
     -------
     d_A : scalar
     """
-    diff_log = log_p_hat - log_p
-    E_diff = np.trapz(diff_log * nu_weight, x)
+    diff_log = log_p_hat - log_p #differenza tra la densità stimata e la densità esatta. 
+    E_diff = np.trapz(diff_log * nu_weight, x) #integrale della differenza tra la densità stimata e la densità esatta pesata per il peso nu(x*)/sigma.
     clr_diff = diff_log - E_diff
-    return float(np.sqrt(np.trapz(clr_diff**2 * nu_weight, x)))
+    return float(np.sqrt(np.trapz(clr_diff**2 * nu_weight, x))) #calcolo della distanza usando la formula di trapezio.
 
 
 def d2_log(x: np.ndarray,

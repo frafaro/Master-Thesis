@@ -72,6 +72,8 @@ PDF e PNG vengono salvati in `project/output/`.
 | 11–12 | PDF & log-PDF, dominio ristretto e completo | Heston |
 | Tabella 2 | Tempi CPU: COS, Hermite N=16, Logistica N=16 | Tutti e tre |
 
+Le Figure 1–12 con suffisso `_c_hat` usano ĉ dal sistema lineare. Le Figure 5–12 con suffisso `_c_fourier` usano i cⱼ Fourier (eq. 9). I file senza suffisso sono identici a `_c_hat`.
+
 ---
 
 ## 5. Struttura del Repository
@@ -317,7 +319,7 @@ p̂_N(x) = Ĉ₀ · exp( Σ_{j=1}^N ĉⱼ · φⱼ(x*) ),    x* = (x − m₁)/�
 ```
 con I* = [(a−m₁)/σ, (b−m₁)/σ] (stesso [a, b] dello Step 3, solo standardizzato). **Metodo numerico:** regola dei trapezi su 20.000 punti uniformi in I*. Trick log-sum-exp per evitare overflow: sottrae max(f) prima di esponenziare, compensa poi.
 
-`eval_density` valuta p̂_N(x) sulla griglia: è la PDF approssimata che entra nelle distanze (Step 11) e nelle Figure 5–12. Senza questo passaggio si avrebbero solo i coefficienti ĉ, non ancora una densità.
+`eval_density` valuta la PDF sulla griglia. Ogni figura 1–12 è salvata anche con suffisso `_c_hat` (ĉ del sistema lineare, eq. 16). In più, le Figure 5–12 sono generate una seconda volta con i coefficienti Fourier esatti cⱼ dell'eq. 9 (suffisso `_c_fourier`): lì Hermite e Logistica sono due serie diverse. I PDF senza suffisso coincidono con `_c_hat`.
 
 ---
 
