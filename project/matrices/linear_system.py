@@ -40,18 +40,18 @@ def delta_coeff(p: int, q: int, r: int) -> float:
     Computed in log-space to avoid overflow for large indices.
     """
     s = p + q + r
-    if s % 2 != 0:
+    if s % 2 != 0: #controlla se la somma è pari altrimenti delta vale 0
         return 0.0
-    b = s // 2
-    if b < p or b < q or b < r:
+    b = s // 2 #calcola il valore di b
+    if b < p or b < q or b < r: #controlla se b è minore di p, q o r altrimenti delta vale 0
         return 0.0
     # log(p!*q!*r! / (b-p)!*(b-q)!*(b-r)!)
     log_val = (lgamma(p + 1) + lgamma(q + 1) + lgamma(r + 1)
-               - lgamma(b - p + 1) - lgamma(b - q + 1) - lgamma(b - r + 1))
-    return np.exp(log_val)
+               - lgamma(b - p + 1) - lgamma(b - q + 1) - lgamma(b - r + 1)) #uso proprietà dei logaritmi: log(a*b) = log(a) + log(b) e log(a/b) = log(a) - log(b)
+    return np.exp(log_val) #restituisce il valore di delta facendo l'esponenziale
 
 
-def build_A_tilde(N: int, mh: np.ndarray) -> np.ndarray:
+def build_A_tilde(N: int, mh: np.ndarray) -> np.ndarray: #dimostrazione su appunti step8
     """
     Build the N×N matrix A~_N.
 
@@ -65,20 +65,20 @@ def build_A_tilde(N: int, mh: np.ndarray) -> np.ndarray:
     where i,j = 1,...,N  (Python: 0,...,N-1 via offset i_py = i-1, j_py = j-1).
     """
     At = np.zeros((N, N))
-    for i in range(1, N + 1):
-        for j in range(1, N + 1):
-            p_idx = i - 1
-            q_idx = j - 1
+    for i in range(1, N + 1): #ciclo per le righe
+        for j in range(1, N + 1): #ciclo per le colonne
+            p_idx = i - 1 #indice della riga
+            q_idx = j - 1 #indice della colonna
             s = 0.0
             for k in range(0, i + j - 1):   # k = 0,...,i+j-2
                 if k >= len(mh):
                     break
-                d = delta_coeff(p_idx, q_idx, k)
+                d = delta_coeff(p_idx, q_idx, k) #calcola il valore di delta usando la funzzione precedente con gli indici della riga e della colonna
                 if d == 0.0:
                     continue
-                norm = sqrt(factorial(p_idx) * factorial(q_idx) * factorial(k))
-                s += (d / norm) * mh[k]
-            At[i - 1, j - 1] = s
+                norm = sqrt(factorial(p_idx) * factorial(q_idx) * factorial(k)) #denominaore della formula
+                s += (d / norm) * mh[k] #somma dei prodotti tra delta normalizzato e momento centrato, mh viene da hermite_moments.py
+            At[i - 1, j - 1] = s #salva il valore di s nella matrice At con gli indici della riga e della colonna
     return At
 
 
@@ -91,12 +91,12 @@ def build_A(N: int, Q: np.ndarray, At: np.ndarray) -> np.ndarray:
     At is the N×N A~_N matrix (0-indexed, rows/cols 0,...,N-1 ↔ paper 1,...,N).
     """
     A = np.zeros((N, N))
-    for i in range(1, N + 1):
-        for n in range(1, N + 1):
+    for i in range(1, N + 1): #ciclo per le righe
+        for n in range(1, N + 1): #ciclo per le colonne
             s = 0.0
-            for j in range(1, n + 1):   # j=1,...,n  (j=0 contributes sqrt(0)=0)
-                s += sqrt(j) * Q[n, j] * At[i - 1, j - 1]
-            A[i - 1, n - 1] = s
+            for j in range(1, n + 1):   # j=1,...,n  (j=0 contributes sqrt(0)=0) 
+                s += sqrt(j) * Q[n, j] * At[i - 1, j - 1] #somma dei prodotti tra la radice quadrata di j, la matrice Q e la matrice At con gli indici della riga e della colonna
+            A[i - 1, n - 1] = s #salva il valore di s nella matrice A con gli indici della riga e della colonna
     return A
 
 
@@ -120,10 +120,10 @@ def build_b(N: int, mh: np.ndarray) -> np.ndarray:
     b = np.zeros(N)
     for i_py in range(N):
         i = i_py + 1          # paper 1-based index
-        if i <= 1:
+        if i <= 1: #controlla se i è minore o uguale a 1 altrimenti b vale 0
             b[i_py] = 0.0     # sqrt(i-1)=0, index mh[-1] undefined
-        else:
-            b[i_py] = -sqrt(i - 1) * mh[i - 2]   # mh[i-2], not mh[i-1]
+        else: #se i è maggiore di 1 allora b vale la formula
+            b[i_py] = -sqrt(i - 1) * mh[i - 2]   # mh[i-2], not mh[i-1], il vettore mh viene da hermite_moments.py
     return b
 
 
@@ -136,23 +136,26 @@ def solve_system(A: np.ndarray, b: np.ndarray,
     Returns (c_hat, cond_number).
     """
     import warnings
-    cond = np.linalg.cond(A)
-    if cond > cond_threshold:
-        c_hat, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+    cond = np.linalg.cond(A) #calcolo il numero di condizionamento della matrice A, 
+    if cond > cond_threshold: #se il numero di condizionamento è maggiore della tolleranza allora si usa il metodo dei minimi quadrati, succede principalmente per la base logistic che ha un numero di condizionamento elevato
+        c_hat, _, _, _ = np.linalg.lstsq(A, b, rcond=None) #risolve il sistema lineare usando il metodo dei minimi quadrati. c_hat = arg min ||A @ c - b||_2
     else:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            c_hat = solve(A, b)
+            c_hat = solve(A, b) #risolve il sistema lineare usando la decomposizione LU. c_hat = A^-1 @ b quando il sistema è ben condizionato
     return c_hat, cond
 
 
-def verify_residual(A: np.ndarray, c_hat: np.ndarray, b: np.ndarray,
+def verify_residual(A: np.ndarray, c_hat: np.ndarray, b: np.ndarray, 
                     tol: float = 1e-8) -> bool:
-    """Check ||A @ c_hat - b|| / ||b|| < tol."""
-    res = np.linalg.norm(A @ c_hat - b)
-    nb  = np.linalg.norm(b)
-    rel = res / nb if nb > 1e-15 else res
-    if rel > tol:
+    """Check ||A @ c_hat - b|| / ||b|| < tol.
+       guardo se c_hat soddisfa davvero il sistema lineare. idealmente si avrebbe A @ c_hat - b = 0 
+
+    """
+    res = np.linalg.norm(A @ c_hat - b) #calcolo la norma del residuo A @ c_hat - b
+    nb  = np.linalg.norm(b) #calcolo la norma del vettore b
+    rel = res / nb if nb > 1e-15 else res #calcolo il residuo relativo
+    if rel > tol: #se il residuo relativo è maggiore della tolleranza allora il sistema non è soddisfatto
         print(f"  Linear system residual: {rel:.2e}  (tol={tol:.1e})")
         return False
     return True

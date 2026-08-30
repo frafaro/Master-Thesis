@@ -296,12 +296,28 @@ Per ogni N = 1, 2, ..., N_MAX = 20:
 
 ---
 
-### Step 9 — Costante di Normalizzazione Ĉ₀ (`expansion/density.py`)
+### Step 9 — Densità Stimata p̂_N e Costante Ĉ₀ (`expansion/density.py`)
 
+Tutti gli step precedenti servono a costruire gli ingredienti dell'espansione esponenziale [Gambaro 2024, eq. 16]:
+
+```
+p̂_N(x) = Ĉ₀ · exp( Σ_{j=1}^N ĉⱼ · φⱼ(x*) ),    x* = (x − m₁)/σ
+```
+
+| Ingrediente | Provenienza |
+|-------------|-------------|
+| ĉⱼ | sistema lineare A ĉ = b (Step 8) |
+| φⱼ | base Hermite o Logistica in x* (Step 6) |
+| I = [a, b] | dominio da cumulanti / CLR (Step 3) |
+| m₁, σ | primi due momenti (Step 2) |
+
+`compute_C0` calcola la costante di normalizzazione [eq. 8 / eq. 16]:
 ```
 Ĉ₀ = 1 / ( σ · ∫_{I*} exp(Σ_{j=1}^N ĉⱼ · φⱼ(t)) dt )
 ```
-**Metodo numerico:** regola dei trapezi su 20.000 punti uniformi in I*. Trick log-sum-exp per evitare overflow: sottrae max(f) prima di esponenziare, compensa poi.
+con I* = [(a−m₁)/σ, (b−m₁)/σ] (stesso [a, b] dello Step 3, solo standardizzato). **Metodo numerico:** regola dei trapezi su 20.000 punti uniformi in I*. Trick log-sum-exp per evitare overflow: sottrae max(f) prima di esponenziare, compensa poi.
+
+`eval_density` valuta p̂_N(x) sulla griglia: è la PDF approssimata che entra nelle distanze (Step 11) e nelle Figure 5–12. Senza questo passaggio si avrebbero solo i coefficienti ĉ, non ancora una densità.
 
 ---
 

@@ -40,7 +40,7 @@ def _gauss_hermite_grid(n: int = _N_GH):
     """
     # Standard Gauss-Hermite: integral f(t)*exp(-t^2) dt ≈ sum w_i f(t_i)
     from numpy.polynomial.hermite import hermgauss
-    t, w_gh = hermgauss(n)
+    t, w_gh = hermgauss(n) #restituisce i nodi e i pesi della griglia di Gauss-Hermite dove w_gh sono i pesi da trasformare in omega(x) in quanto omega(t) è uguale a exp(-t^2) ma noi abbiamo bisogno di omega(x) = exp(-x^2/2)/sqrt(2pi) quindi w_gh devo dividerlo per sqrt(2pi) [dimo su appunti step 7]
     # x = sqrt(2)*t,  omega(x) dx = exp(-x^2/2)/sqrt(2pi) dx
     # integral f(x)*omega(x) dx = integral f(sqrt(2)*t)*exp(-t^2)/sqrt(pi) dt
     #                           ≈ sum w_i f(sqrt(2)*t_i) / sqrt(pi)
@@ -51,9 +51,9 @@ def _gauss_hermite_grid(n: int = _N_GH):
 
 _GH_CACHE = {}
 
-def _get_gh(n: int = _N_GH):
+def _get_gh(n: int = _N_GH): #restituisce la griglia di Gauss-Hermite e i pesi trasformati in omega(x)
     if n not in _GH_CACHE:
-        _GH_CACHE[n] = _gauss_hermite_grid(n)
+        _GH_CACHE[n] = _gauss_hermite_grid(n) #richiama la funzione precedente per ottenere la griglia di Gauss-Hermite e i pesi trasformati in omega(x)
     return _GH_CACHE[n]
 
 
@@ -79,10 +79,10 @@ def build_Q_logistic(N: int, alpha: np.ndarray, beta: np.ndarray) -> np.ndarray:
     from basis.logistic import eval_logistic_recurrence
     from basis.hermite import eval_hermite
 
-    x_gh, w_gh = _get_gh()
+    x_gh, w_gh = _get_gh() #restituisce la griglia di Gauss-Hermite e i pesi trasformati in omega(x)
 
     # Evaluate logistic basis at Gauss-Hermite nodes
-    L_vals = eval_logistic_recurrence(x_gh, N, alpha, beta)   # (N+1, n_gh)
+    L_vals = eval_logistic_recurrence(x_gh, N, alpha, beta)   # (N+1, n_gh) #valuta la base logistic a i nodi della griglia di Gauss-Hermite
 
     # Evaluate Hermite basis at Gauss-Hermite nodes
     H_vals = eval_hermite(x_gh, N)                             # (N+1, n_gh)
@@ -92,7 +92,7 @@ def build_Q_logistic(N: int, alpha: np.ndarray, beta: np.ndarray) -> np.ndarray:
     Q = (L_vals * w_gh) @ H_vals.T   # (N+1, N+1)
     return Q
 
-
+#### this part is not necessary but it's a double check to verify that the Q matrix is correct ####
 def verify_Q_hermite(Q: np.ndarray, tol: float = 1e-10) -> bool:
     """For Hermite basis, Q should be identity."""
     err = np.linalg.norm(Q - np.eye(Q.shape[0]), "fro")
