@@ -123,15 +123,167 @@ project/
 
 ## 6. Background Matematico
 
-### 6.1 Bayesian Hilbert Space [Gambaro 2024, §2]
+### 6.1 Bayesian Hilbert Space
 
-Il paper lavora nello spazio B²(I, ν), lo spazio delle funzioni strettamente positive log-quadrato-integrabili con peso di riferimento ν. B² è isometricamente isomorfo a L²(I, ν) tramite la trasformazione CLR [eq. 2]. La distanza di Aitchison in B² coincide con la distanza L² fra le CLR:
+Gambaro (2024, §2) colloca l’espansione esponenziale nella geometria dei **Bayes spaces** [Egozcue et al. 2006; van den Boogaart, Egozcue & Pawlowsky-Glahn 2010; Egozcue et al. 2013; van den Boogaart et al. 2014]. L’idea è di Aitchison (1986): sul simplesso delle composizioni a D parti, l’operazione di *perturbation* è la stessa del teorema di Bayes (prior × likelihood → posterior). Estesa a densità su un dominio continuo, quella operazione diventa la somma di uno spazio vettoriale i cui punti sono classi di misure positive.
+
+#### 6.1.1 Da composizioni a misure: lo spazio lineare B(λ)
+
+Sia (Ω, 𝒜) uno spazio misurabile e λ una misura positiva σ-finita di riferimento (dominating measure: Lebesgue su ℝ, conteggio su ℕ, …). M(λ) è la classe delle misure σ-finite **equivalenti** a λ (stessi insiemi nulli). Ogni μ ∈ M(λ) ha densità di Radon–Nikodym f_μ = dμ/dλ > 0, λ-q.o.
+
+Due misure in M(λ) sono **B-equivalenti** (μ =_B ν) se differiscono per una costante positiva [van den Boogaart et al. 2010, Def. 2; Egozcue et al. 2013]. Lo spazio quoziente
 
 ```
-d_A(p̂_N, p) = √[ ∫_I (clr(p̂_N)(x) − clr(p)(x))² ν(x) dx ]   [eq. 18]
+B(λ) = M(λ) / (=_B)
 ```
 
-### 6.2 Stima dei Coefficienti — Sistema Lineare [Gambaro 2024, eq. 15]
+identifica quindi densità **proporzionali**: una misura finita è lo stesso elemento della sua normalizzazione a PDF; una likelihood non normalizzata è lo stesso elemento della likelihood normalizzata. È il principio di invarianza di scala dei dati composizionali e, in statistica bayesiana, il likelihood principle [Egozcue et al. 2013].
+
+Su B(λ) si definiscono [van den Boogaart et al. 2010, Def. 3]:
+
+```
+perturbation (somma):     (f ⊕ g)(x)  =_B  f(x) · g(x)
+powering (scalare):       (α ⊙ f)(x)  =_B  f(x)^α
+opposto:                  ⊖f          =_B  1/f
+differenza:               (f ⊖ g)(x)  =_B  f(x)/g(x) = dμ_f / dμ_g
+```
+
+La differenza è la derivata di Radon–Nikodym (chain rule). L’elemento neutro di ⊕ è una densità costante, cioè la misura dominante λ. Con ⊕ e ⊙, B(λ) è uno **spazio vettoriale reale** [van den Boogaart et al. 2010, Thm. 5], detto *Bayes (linear) space*.
+
+Interpretazione statistica: ⊕ è l’aggiornamento di Bayes. Se π è un prior e L una likelihood,
+
+```
+π_post  =_B  π ⊕ L
+```
+
+vale anche se π o L non sono integrabili (prior impropri, likelihood non normalizzabili), purché si confronti evidenza su eventi a misura finita (*event-coherence* di Egozcue et al. 2013). In B(λ) prior, likelihood e posterior sono lo stesso tipo di oggetto: densità-evidenza.
+
+B(λ) si spezza in due sottoinsiemi [van den Boogaart et al. 2010, Thm. 8]:
+
+| Sottoinsieme | Contenuto |
+|--------------|-----------|
+| B_P(λ) | classi di misure **finite** (PDF, a meno di scala) — convesso, non è un sottospazio |
+| B_I(λ) | classi di misure **infinite** (prior impropri, likelihood non integrabili) |
+
+Una densità in B_I non può essere normalizzata a probabilità; resta comunque un vettore legittimo di B(λ). Questo è il punto che Gambaro userà per le code grasse: una serie di Hermite troncata può uscire da B_P (Ĉ₀ non esiste) restando in B.
+
+Cambio di origine: se si sostituisce λ con una misura B-equivalente μ, B(μ) e B(λ) coincidono come spazi affini (solo traslazione dell’origine) [van den Boogaart et al. 2010, Thm. 6–7]. In Gambaro l’origine/peso di riferimento è una PDF ν (gaussiana o logistica), non necessariamente Lebesgue.
+
+#### 6.1.2 Famiglie esponenziali come sottospazi affini
+
+In B(λ) una famiglia esponenziale (estesa, senza richiedere che C(θ) esista) è un **sottospazio affine di dimensione finita** [van den Boogaart et al. 2010, Thm. 9–10; Egozcue et al. 2013]:
+
+```
+f_θ  =_B  g · exp( Σ_j θ_j T_j )  =_B  g ⊕ ⊕_j (θ_j ⊙ exp(T_j))
+```
+
+g è l’origine affine; {exp(T_j)} è una base. La famiglia esponenziale classica è l’intersezione di quell’affine con B_P (i θ per cui l’integrale di normalizzazione converge). L’espansione di Gambaro p_N = C₀ exp(Σ c_j φ_j) è esattamente un punto di una famiglia esponenziale N-parametrica in B, con statistiche sufficienti i polinomi della base.
+
+#### 6.1.3 Dallo spazio lineare allo spazio di Hilbert B² [Gambaro 2024, §2]
+
+B(λ) non ha ancora prodotto interno. Su un intervallo finito Egozcue et al. (2006) completano la geometria di Aitchison: le densità **log-quadrato-integrabili** formano uno spazio di Hilbert, con somma = Bayes. van den Boogaart et al. (2014) estendono la struttura a supporti generali. Gambaro lavora in questa versione Hilbert, denotata B²(I, ν).
+
+Sia I ⊆ ℝ e ν una PDF strettamente positiva su I (peso di riferimento; Gambaro nota che non è necessario che ν sia una PDF, ma lo assume per semplicità). Si definisce [Gambaro eq. 1]
+
+```
+B²(I, ν) = { f(x) = c exp(φ(x))  |  0 < c < ∞,  ∫_I φ(x)² ν(x) dx < ∞ }
+```
+
+Ogni elemento è l’esponenziale di una funzione di L²(I, ν). Due elementi f₁ = c₁ exp(φ₁), f₂ = c₂ exp(φ₂) sono **uguali in B²** sse φ₁ = φ₂: le costanti di scala non distinguono i vettori (stessa B-equivalenza del §6.1.1).
+
+La **centered log-ratio** (CLR) [Aitchison 1986; Gambaro eq. 2] mappa B² in L²:
+
+```
+clr(f)(x) = log f(x) − ∫_I log f(x) ν(x) dx
+```
+
+Il secondo termine centra rispetto a ν, così ∫ clr(f) ν dx = 0. La CLR è lineare, suriettiva e invertibile, con
+
+```
+clr⁻¹(φ) = exp(φ)
+```
+
+[van den Boogaart et al. 2014]. Quindi B² ≅ L² come spazi vettoriali: le operazioni di Gambaro (scrittura moltiplicativa, equivalente a ⊕, ⊙)
+
+```
+(f₁ ⊕ f₂)(x) = f₁(x) f₂(x) = c₁ c₂ exp(φ₁ + φ₂)
+(α · f)(x)   = f(x)^α      = c^α exp(α φ)
+(f₁ ⊖ f₂)(x) = (c₁/c₂) exp(φ₁ − φ₂)
+```
+
+sono, via CLR, somma e prodotto scalare ordinari in L². Lo zero di B² è una costante, clr(costante) = 0.
+
+Prodotto interno su B² [Gambaro eq. 3]:
+
+```
+⟨f₁, f₂⟩_B = (1/2) ∫_I ∫_I log(f₁(x)/f₁(y)) log(f₂(x)/f₂(y)) ν(x) ν(y) dx dy
+            = Cov_ν(log f₁, log f₂)
+            = ⟨ clr(f₁), clr(f₂) ⟩_{L²(ν)}
+```
+
+Le costanti c₁, c₂ non entrano. Con questo prodotto B² è uno **spazio di Hilbert separabile** (Bayesian Hilbert space). Norma ‖f‖ = √⟨f, f⟩. Distanza di Aitchison [Gambaro eq. 4]:
+
+```
+d_A(f, g) = ‖ f ⊖ g ‖_B
+```
+
+La CLR è un’**isometria** B² → L²(I, ν) [Egozcue et al. 2006; van den Boogaart et al. 2014; Gambaro eq. 5]:
+
+```
+d_A(f, g) = ‖ clr(f) − clr(g) ‖_{L²(ν)}
+          = √[ ∫_I (clr(f)(x) − clr(g)(x))² ν(x) dx ]
+```
+
+(Nel paper l’eq. 5 omette a volte la radice, come le eq. 17 e 21; nel codice e in eq. 18 la distanza è la norma, quindi con √, coerente con eq. 4.)
+
+Non ogni PDF sta in B²: serve p > 0 su I e ∫ (log p)² ν dx < ∞. Viceversa non ogni f ∈ B² è una PDF. Si pone [Gambaro dopo eq. 5]
+
+```
+B²_P = { f ∈ B² : ∫_I f(x) dx < ∞ }
+```
+
+e l’operatore di normalizzazione P : B²_P → B²_P,
+
+```
+P(f)(x) = f(x) / ∫_I f      [eq. 6]
+```
+
+P(f) è una PDF, B-equivalente a f. B²_P corrisponde a B_P(λ) del §6.1.1. Se la serie troncata cade in B² \ B²_P, Ĉ₀ non esiste: è il caso Hermite su code molto grasse [Gambaro, p. 2; van den Boogaart et al. 2011, 2014].
+
+### 6.2 Espansione esponenziale come serie di Fourier in B² [Gambaro 2024, §3]
+
+Sia {ψ_j}_{j≥0} una base **ortonormale completa** di L²(I, ν), con ψ₀ costante. Esempi su I = ℝ: Hermite normalizzati (ν = ω gaussiana) e polinomi logistici (ν = ν_L). L’isometria CLR manda {ψ_j}_{j≥1} in una base ortonormale {g_j} di B²,
+
+```
+g_j = clr⁻¹(ψ_j) = exp(ψ_j)
+```
+
+Ogni p ∈ B² si scrive come serie di Fourier in B² [Gambaro, Prop. 1]:
+
+```
+p  =  ⊕_{j=1}^∞  (c_j · g_j)  =_B  exp( Σ_{j=1}^∞ c_j ψ_j )
+c_j = ⟨p, g_j⟩_B = ∫_I clr(p)(x) ψ_j(x) ν(x) dx     [eq. 9]
+```
+
+La troncata a N termini è
+
+```
+p_N(x) = C₀ exp( Σ_{j=1}^N c_j ψ_j(x) )     [eq. 7–8]
+```
+
+C₀ è la normalizzazione (6) quando p_N ∈ B²_P; in B², p_N e exp(Σ c_j ψ_j) sono lo stesso vettore. Per costruzione clr(p_N) = Σ_{j=1}^N c_j ψ_j è la proiezione L²(ν) di clr(p) sui primi N modi (ψ₀ è già tolto dalla CLR). Dunque
+
+```
+d_A(p, p_N) → 0  per N → ∞     [eq. 10]
+```
+
+in B², alla velocità della coda di Fourier di clr(p) in L²(ν).
+
+La C-type Gram–Charlier è il caso particolare ψ_j = h_j (Hermite). Scegliere la Logistica cambia il peso ν e quindi la geometria in cui si misura la convergenza: code più pesanti di ω stanno in L²(ν_L) meglio che in L²(ω), e p_N ha più chance di restare in B²_P.
+
+L’eq. 16 sostituisce i c_j Fourier con gli ĉ del sistema lineare (§6.3): stessa formula esponenziale, stessa base {ψ_j}, coefficienti stimati dai momenti invece che da clr(p).
+
+### 6.3 Stima dei Coefficienti — Sistema Lineare [Gambaro 2024, eq. 15]
 
 I coefficienti `ĉⱼ` si ottengono risolvendo il sistema N×N:
 
@@ -505,6 +657,9 @@ Impostando j=1 (caso 1D, `mʰ_{k,0} = mʰₖ`) si ottiene esattamente `b_i = −
 | Elemento | Fonte | Dove |
 |----------|-------|------|
 | Parametri NIG | Gambaro (2024) | Appendice A |
+| Geometria B(λ), ⊕, B-equivalenza, famiglie esponenziali affini | van den Boogaart, Egozcue & Pawlowsky-Glahn (2010) | *SORT* 34(2) |
+| Prior impropri, event-coherence di Bayes in B(λ) | Egozcue et al. (2013) | *RACSAM* 107 |
+| Hilbert B², CLR isometria | Egozcue et al. (2006); van den Boogaart et al. (2014) | cited in Gambaro §2 |
 | Tutte le formule eqs. (7)–(22) | Gambaro (2024) | §2–§4 |
 | Griglia COS 2¹² | Gambaro (2024) | §5 |
 | Regola dominio eq. (22) con L=4 | Gambaro (2024) | §4 |
@@ -524,6 +679,11 @@ Impostando j=1 (caso 1D, `mʰ_{k,0} = mʰₖ`) si ottiene esattamente `b_i = −
 ## 14. Riferimenti
 
 - **Gambaro, A.M.** (2024). Exponential expansions for approximation of probability distributions. *Decisions in Economics and Finance*. DOI: 10.1007/s10203-024-00460-2
+- **Aitchison, J.** (1986). *The Statistical Analysis of Compositional Data*. Chapman & Hall.
+- **Egozcue, J.J., Díaz-Barrero, J.L., Pawlowsky-Glahn, V.** (2006). Hilbert space of probability density functions based on Aitchison geometry. *Acta Math. Sinica* 22(4), 1175–1182.
+- **van den Boogaart, K.G., Egozcue, J.J., Pawlowsky-Glahn, V.** (2010). Bayes linear spaces. *SORT* 34(2), 201–222.
+- **Egozcue, J.J., Pawlowsky-Glahn, V., Tolosana-Delgado, R., Ortego, M.I., van den Boogaart, K.G.** (2013). Bayes spaces: use of improper distributions and exponential families. *RACSAM* 107, 475–486.
+- **van den Boogaart, K.G., Egozcue, J.J., Pawlowsky-Glahn, V.** (2014). Bayes Hilbert spaces. *Aust. N. Z. J. Stat.* 56(2), 171–194.
 - **Fang, F., Oosterlee, C.W.** (2009). A novel pricing method for European options based on Fourier-cosine series expansions. *SIAM J. Sci. Comput.* 31(2), 826–848.
 - **Muscolino, G., Ricciardi, G.** (1999). Probability density function of MDOF structural systems under non-normal delta-correlated inputs. *Comput. Methods Appl. Mech. Eng.* 168(1), 121–133.
 - **Rompolis, L.S., Tzavalis, E.** (2008). Recovering risk neutral densities from option prices: a new approach. *J. Financ. Quant. Anal.* 43(4), 1037–1053.
