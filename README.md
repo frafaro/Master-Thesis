@@ -7,12 +7,13 @@
 
 ## 1. Obiettivo
 
-Questo repository replica **tutti gli esperimenti numerici della Sezione 5** di Gambaro (2024): **Figure 1–12** e **Tabella 2**, per tre modelli di log-return finanziari:
+Questo repository replica **tutti gli esperimenti numerici della Sezione 5** di Gambaro (2024): **Figure 1–12** e **Tabella 2**, e li estende al **CGMY** (Figure 13–15):
 
 | Modello | Skewness | Kurtosi eccesso | Riferimento parametri |
 |---------|----------|-----------------|-----------------------|
 | Variance Gamma (VG) | 0 | 2 | Heston & Rossi (2016) |
 | Normal Inverse Gaussian (NIG) | ≈0.22 | ≈0.97 | Gambaro (2024), Appendice A |
+| CGMY | ≈−0.494 | ≈1.353 | Carr et al. (2002); G=7, M=12, Y=0.6, C da κ₂=0.04 |
 | Heston (log-return) | −1.2 | 2.5 | Rompolis & Tzavalis (2008) |
 
 ---
@@ -48,10 +49,11 @@ I coefficienti di Fourier di `clr(p)` nella base `{φⱼ}` sono i target `cⱼ` 
 cd project/
 pip install -r requirements.txt
 
-python main.py --models all           # run completo (~35 s), tutte le 12 figure + Tabella 2
+python main.py --models all           # run completo, Figure 1–15 + Tabella 2
 python main.py --models VG            # solo VG: Figure 1, 5, 9
 python main.py --models NIG           # solo NIG: Figure 2, 6, 10
 python main.py --models Heston        # Heston: Figure 3, 7, 8, 11, 12
+python main.py --models CGMY          # solo CGMY: Figure 13, 14, 15
 python main.py --models all --calibrate   # ri-calibra i parametri Heston
 ```
 
@@ -64,13 +66,17 @@ PDF e PNG vengono salvati in `project/output/`.
 | Figura | Contenuto | Modelli |
 |--------|-----------|---------|
 | 1–3 | Convergenza coefficienti `d₂(ĉN, c)` vs N (Hermite & Logistica) | VG, NIG, Heston |
-| 4 | CLR delle tre PDF sul dominio standardizzato | Tutti e tre |
+| 4 | CLR delle tre PDF sul dominio standardizzato | VG, NIG, Heston |
+| 4 (four) | Stesso overlay con in più CGMY | Tutti e quattro |
 | 5–6 | 4 distanze densità vs N (Aitchison, log-L2, L1, L2) | VG, NIG |
 | 7 | Distanze densità, dominio ristretto Heston | Heston |
 | 8 | Distanze densità, dominio L=4, solo Logistica | Heston |
 | 9–10 | PDF & log-PDF a confronto, N=6 e N=16 | VG, NIG |
 | 11–12 | PDF & log-PDF, dominio ristretto e completo | Heston |
-| Tabella 2 | Tempi CPU: COS, Hermite N=16, Logistica N=16 | Tutti e tre |
+| 13 | Convergenza coefficienti vs N | CGMY |
+| 14 | 4 distanze densità vs N | CGMY |
+| 15 | PDF & log-PDF, N=6 e N=16 | CGMY |
+| Tabella 2 | Tempi CPU: COS, Hermite N=16, Logistica N=16 | VG, NIG, CGMY, Heston |
 
 Tutte le figure senza suffisso usano i coefficienti stimati ĉ del sistema lineare [eq. 15–16]. Solo le Figure 8 e 12 hanno una copia extra `_c_fourier`, costruita con i cⱼ Fourier esatti [eq. 9]. Motivo: sul dominio Heston L=4 il sistema per ĉ è numericamente instabile (Ĉ₀ underflow, distanze NaN o esplose a N≥10), mentre le figure di Gambaro mostrano la Logistica che continua a decrescere fino a N=16 con distanze ≪ 1. I cⱼ Fourier riproducono quel comportamento e una densità Logistica usabile (Fig. 12); non sostituiscono lo stimatore da momenti, servono solo come confronto su quel caso patologico.
 
@@ -86,7 +92,8 @@ project/
 ├── models/
 │   ├── variance_gamma.py      # VG: CF, cumulanti (CGF), momenti
 │   ├── nig.py                 # NIG: CF, derivate CGF, momenti
-│   └── heston.py              # Heston: CF (forma Gatheral), cumulanti mpmath, calibrazione
+│   ├── heston.py              # Heston: CF (forma Gatheral), cumulanti mpmath, calibrazione
+│   └── cgmy.py                # CGMY: CF Carr et al. (2002), cumulanti chiusi, no r/q
 │
 ├── basis/
 │   ├── hermite.py             # Polinomi He normalizzati via ricorrenza a 3 termini
@@ -333,6 +340,7 @@ dove `μ*_j = E[(X*)ʲ]` sono i momenti grezzi standardizzati.
 | VG | sigma=0.2, nu=2/3, theta=0, mu=0 | Heston & Rossi (2016): skewness=0, kurtosi eccesso=3ν=2 |
 | NIG | mu=0, theta=0.05, sigma=0.2, kappa=0.3, dt=1 | Gambaro (2024), Appendice A |
 | Heston | kappa=2.0015, theta=0.04785, xi=0.40299, rho=−0.76635, v0=0.05879, T=1 | Calibrati su Rompolis & Tzavalis (2008): skewness=−1.2, kurtosi=2.5 |
+| CGMY | C≈0.467485, G=7, M=12, Y=0.6, t=1 (no r, q) | Carr et al. (2002). C da κ₂=0.04. Momenti: skew≈−0.494, exkurt≈1.353. G=7, M=12, Y=0.6 sono convenzioni (non una calibrazione di mercato). |
 
 **Nota (footnote 4 del paper):** i coefficienti ĉ_N **non dipendono** dal dominio troncato I — la troncatura influenza solo COS e le metriche di distanza.
 
@@ -679,6 +687,7 @@ Impostando j=1 (caso 1D, `mʰ_{k,0} = mʰₖ`) si ottiene esattamente `b_i = −
 ## 14. Riferimenti
 
 - **Gambaro, A.M.** (2024). Exponential expansions for approximation of probability distributions. *Decisions in Economics and Finance*. DOI: 10.1007/s10203-024-00460-2
+- **Carr, P., Geman, H., Madan, D.B., Yor, M.** (2002). The fine structure of asset returns: an empirical investigation. *J. Business* 75(2), 305–332.
 - **Aitchison, J.** (1986). *The Statistical Analysis of Compositional Data*. Chapman & Hall.
 - **Egozcue, J.J., Díaz-Barrero, J.L., Pawlowsky-Glahn, V.** (2006). Hilbert space of probability density functions based on Aitchison geometry. *Acta Math. Sinica* 22(4), 1175–1182.
 - **van den Boogaart, K.G., Egozcue, J.J., Pawlowsky-Glahn, V.** (2010). Bayes linear spaces. *SORT* 34(2), 201–222.

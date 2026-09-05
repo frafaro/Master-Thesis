@@ -1,12 +1,12 @@
 """
 main.py — Full replication pipeline for Gambaro (2024).
 
-Runs the complete experiment for VG, NIG, and Heston models,
-producing Figures 1-12 and Table 2.
+Runs the complete experiment for VG, NIG, Heston and CGMY,
+producing Figures 1-15 and Table 2.
 
 Usage:
     cd project/
-    python main.py [--model VG|NIG|Heston|all] [--calibrate]
+    python main.py [--models VG|NIG|Heston|CGMY|all] [--calibrate]
 
 The --calibrate flag re-runs the Heston parameter calibration
 (slow; results are cached in config.py HESTON_PARAMS after first run).
@@ -27,6 +27,7 @@ from utils.timing import timed
 import models.variance_gamma as vg_mod
 import models.nig as nig_mod
 import models.heston as heston_mod
+import models.cgmy as cgmy_mod
 
 # Basis
 from basis.hermite import eval_hermite, gaussian_weight
@@ -51,8 +52,8 @@ from distances.metrics import d2_coeff, d2_coeff_estim, all_distances
 
 # Plots
 from plots.figures import (
-    fig_coeff_convergence, fig4_clr, fig_density_distances,
-    fig_density_comparison, print_table2,
+    fig_coeff_convergence, fig4_clr, fig4_clr_with_cgmy,
+    fig_density_distances, fig_density_comparison, print_table2,
 )
 
 
@@ -428,14 +429,32 @@ def main(args):
             timing_results=timing,
         )
 
+    if "CGMY" in models_to_run or "all" in models_to_run:
+        clr_data["CGMY"] = run_model(
+            model_name="CGMY",
+            cf_func=cgmy_mod.characteristic_function,
+            raw_moments_func=cgmy_mod.raw_moments,
+            params=CFG.CGMY_PARAMS,
+            fig_nums={"coeff": 13, "dist_full": 14, "dens_full": 15},
+            timing_results=timing,
+        )
+
     # ── Figure 4: CLR overlay ────────────────────────────────────────────────
-    if len(clr_data) == 3:
+    have_three = all(k in clr_data for k in ("VG", "NIG", "Heston"))
+    if have_three:
         print("\nGenerating Figure 4 (CLR overlay)...")
         fig4_clr(
             clr_data["VG"]["x_std"],     clr_data["VG"]["clr"],
             clr_data["NIG"]["x_std"],    clr_data["NIG"]["clr"],
             clr_data["Heston"]["x_std"], clr_data["Heston"]["clr"],
         )
+        if "CGMY" in clr_data:
+            fig4_clr_with_cgmy(
+                clr_data["VG"]["x_std"],     clr_data["VG"]["clr"],
+                clr_data["NIG"]["x_std"],    clr_data["NIG"]["clr"],
+                clr_data["Heston"]["x_std"], clr_data["Heston"]["clr"],
+                clr_data["CGMY"]["x_std"],   clr_data["CGMY"]["clr"],
+            )
 
     # ── Table 2 ─────────────────────────────────────────────────────────────
     if timing:
@@ -447,7 +466,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Gambaro (2024) replication")
     parser.add_argument("--models", nargs="+", default=["all"],
-                        choices=["VG", "NIG", "Heston", "all"],
+                        choices=["VG", "NIG", "Heston", "CGMY", "all"],
                         help="Which models to run (default: all)")
     parser.add_argument("--calibrate", action="store_true",
                         help="Re-calibrate Heston parameters to target moments")

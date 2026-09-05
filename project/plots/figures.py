@@ -140,6 +140,30 @@ def fig4_clr(x_vg: np.ndarray,  clr_vg: np.ndarray,
     _save(fig, f"figure_04_clr_three_pdfs{tag}.pdf")
 
 
+def fig4_clr_with_cgmy(x_vg, clr_vg, x_nig, clr_nig,
+                       x_heston, clr_heston, x_cgmy, clr_cgmy,
+                       suffix: str = ""):
+    """
+    Overlay CLR come Fig. 4, con in più il CGMY (estensione della tesi).
+    Non sostituisce figure_04_clr_three_pdfs.pdf (replica Gambaro).
+    """
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.plot(x_vg,     clr_vg,     label="VG",     color="blue")
+    ax.plot(x_nig,    clr_nig,    label="NIG",     color="green")
+    ax.plot(x_heston, clr_heston, label="Heston",  color="red")
+    ax.plot(x_cgmy,   clr_cgmy,   label="CGMY",    color="purple")
+    ax.axhline(10,  color="k", linestyle="--", linewidth=0.8)
+    ax.axhline(-10, color="k", linestyle="--", linewidth=0.8)
+    ax.set_xlabel(r"$x^*$")
+    ax.set_ylabel(r"$\mathrm{clr}(p)(x^*)$")
+    ax.set_title("CLR of four standardized PDFs  (L=4), with CGMY")
+    ax.legend()
+    ax.grid(True, linestyle=":", alpha=0.6)
+    fig.tight_layout()
+    tag = f"_{suffix}" if suffix else ""
+    _save(fig, f"figure_04_clr_four_pdfs{tag}.pdf")
+
+
 # ── Figures 5-8: density convergence distances ───────────────────────────────
 
 def fig_density_distances(dist_hermite: Dict[str, np.ndarray],
@@ -297,7 +321,7 @@ def print_table2(times: Dict[str, Dict[str, float]]):
     """
     header = f"{'Model':<10} {'COS':>10} {'Hermite':>12} {'Logistic':>12}"
     rows = []
-    for model in [m for m in ["VG", "NIG", "Heston"] if m in times]:
+    for model in [m for m in ["VG", "NIG", "CGMY", "Heston"] if m in times]:
         t = times[model]
         rows.append(f"{model:<10} {t['cos']:>10.4f} {t['hermite']:>12.4f} {t['logistic']:>12.4f}")
     table_str = "\n".join(["", "Table 2 — CPU times (seconds), N=16", "-" * 48, header, "-" * 48] + rows + ["-" * 48, ""])
