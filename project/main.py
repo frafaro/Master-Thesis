@@ -187,18 +187,22 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     t_hermite_N16  = 0.0
     t_logistic_N16 = 0.0
 
+    # Fallback lstsq solo per Heston (vedi docstring di solve_system):
+    # per VG/NIG/CGMY LU pura; per Heston si mantiene il comportamento storico.
+    cond_thr = 1e14 if is_heston else None
+
     for N in range(1, N_MAX + 1):
         At_N = build_A_tilde(N, mh)
         b_N  = build_b(N, mh)
 
         # Hermite
         A_herm = build_A(N, Q_hermite, At_N)
-        c_h, _ = solve_system(A_herm, b_N)
+        c_h, _ = solve_system(A_herm, b_N, cond_threshold=cond_thr)
         c_hats_hermite.append(c_h)
 
         # Logistic
         A_log = build_A(N, Q_logistic, At_N)
-        c_l, _ = solve_system(A_log, b_N)
+        c_l, _ = solve_system(A_log, b_N, cond_threshold=cond_thr)
         c_hats_logistic.append(c_l)
 
         if N == 16:
@@ -207,14 +211,14 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
                 At = build_A_tilde(16, mh)
                 b  = build_b(16, mh)
                 A  = build_A(16, Q_hermite, At)
-                return solve_system(A, b)
+                return solve_system(A, b, cond_threshold=cond_thr)
             _, t_hermite_N16 = timed(_time_hermite)
 
             def _time_logistic():
                 At = build_A_tilde(16, mh)
                 b  = build_b(16, mh)
                 A  = build_A(16, Q_logistic, At)
-                return solve_system(A, b)
+                return solve_system(A, b, cond_threshold=cond_thr)
             _, t_logistic_N16 = timed(_time_logistic)
 
     timing_results[model_name]["hermite"]  = t_hermite_N16
