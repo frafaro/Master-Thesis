@@ -88,44 +88,44 @@ Tutte le figure senza suffisso usano i coefficienti stimati ĉ del sistema linea
 
 ```
 project/
-├── config.py                  # Parametri modelli, N_MAX=20, L=4, N_COS=4096
-├── main.py                    # Orchestratore della pipeline completa
+├── config.py                  # model parameters
+├── main.py                    # pipeline orchestrator 
 │
 ├── models/
-│   ├── variance_gamma.py      # VG: CF, cumulanti (CGF), momenti
-│   ├── nig.py                 # NIG: CF, derivate CGF, momenti
-│   ├── heston.py              # Heston: CF (forma Gatheral), cumulanti mpmath, calibrazione
-│   └── cgmy.py                # CGMY: CF Carr et al. (2002), cumulanti chiusi, no r/q
+│   ├── variance_gamma.py      # VG: CF, cumulants (CGF), moments
+│   ├── nig.py                 # NIG: CF, cumulants CGF, moments
+│   ├── heston.py              # Heston: CF ( Gatheral), cumulants, calibration
+│   └── cgmy.py                # CGMY: CF , cumulants, moments
 │
 ├── basis/
-│   ├── hermite.py             # Polinomi He normalizzati via ricorrenza a 3 termini
-│   └── logistic.py            # Polinomi logistici via algoritmo di Stieltjes/Lanczos
+│   ├── hermite.py             # Hermite polynomials
+│   └── logistic.py            # Logistic polynomials
 │
 ├── moments/
-│   └── hermite_moments.py     # mʰₖ = E[hₖ(X*)] da momenti grezzi [Rompolis & Tzavalis 2008]
+│   └── hermite_moments.py     # mʰₖ = E[hₖ(X*)] from [Rompolis & Tzavalis 2008]
 │
 ├── matrices/
-│   ├── basis_matrices.py      # Entry point: costruisce H, ricorrenza logistica + Q
-│   ├── change_of_basis.py     # Q_n via inner products Gauss-Hermite a 200 punti
-│   └── linear_system.py       # Δ_{p,q,r}, Ã_N, A_N, b_N, solve + verifica residuo
+│   ├── basis_matrices.py      # builds the matrices for the Ackerer and Filipović (2020) relation
+│   ├── change_of_basis.py     # solves the Qn matrix
+│   └── linear_system.py       # solve the linear system
 │
 ├── expansion/
-│   └── density.py             # Ĉ₀ via log-sum-exp quadratura, valuta p̂_N
+│   └── density.py             # evaluation of the approximated density
 │
 ├── cos/
-│   └── cos_method.py          # Densità COS [Fang & Oosterlee 2009], coefficienti cⱼ benchmark
+│   └── cos_method.py          # Cos density [Fang & Oosterlee 2009], and fourier coefficients
 │
 ├── distances/
-│   └── metrics.py             # d₂(ĉN,c) con troncamento, Aitchison, log-L2, L1, L2
+│   └── metrics.py             # d2(c , c_hat), Aitchison, log-L2, L1, L2
 │
 ├── plots/
-│   └── figures.py             # Tutte le 12 funzioni figura + print_table2
+│   └── figures.py             # builds the graphs
 │
 ├── utils/
-│   ├── quadrature.py          # Dominio via eq. (22), clr_domain per Heston, griglia
-│   └── timing.py              # Wrapper perf_counter per Tabella 2
+│   ├── quadrature.py          # rules for domain truncation
+│   
 │
-└── output/                    # Figure generate (PDF + PNG) e tabella
+└── output/                    # saves the images as PDFs
 ```
 
 ---
