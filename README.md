@@ -7,7 +7,7 @@
 
 ## 1. Obiettivo
 
-Questo repository replica **tutti gli esperimenti numerici della Sezione 5** di Gambaro (2024): **Figure 1–12** e **Tabella 2**, e li estende al **CGMY** (Figure 13–15):
+Questo repository replica **tutti gli esperimenti numerici della Sezione 5** di Gambaro (2024): **Figure 1–12** e **Tabella 2**, e li estende al **CGMY** (Figure 13–17):
 
 | Modello | Skewness | Kurtosi eccesso | Riferimento parametri |
 |---------|----------|-----------------|-----------------------|
@@ -49,11 +49,11 @@ I coefficienti di Fourier di `clr(p)` nella base `{φⱼ}` sono i target `cⱼ` 
 cd project/
 pip install -r requirements.txt
 
-python main.py --models all           # run completo, Figure 1–15 + Tabella 2
+python main.py --models all           # run completo, Figure 1–17 + Tabella 2
 python main.py --models VG            # solo VG: Figure 1, 5, 9
 python main.py --models NIG           # solo NIG: Figure 2, 6, 10
 python main.py --models Heston        # Heston: Figure 3, 7, 8, 11, 12
-python main.py --models CGMY          # solo CGMY: Figure 13, 14, 15
+python main.py --models CGMY          # solo CGMY: Figure 13, 14, 15, 16, 17
 python main.py --models all --calibrate   # ri-calibra i parametri Heston
 ```
 
@@ -76,6 +76,8 @@ PDF e PNG vengono salvati in `project/output/`.
 | 13 | Convergenza coefficienti vs N | CGMY |
 | 14 | 4 distanze densità vs N | CGMY |
 | 15 | PDF & log-PDF, N=6 e N=16 | CGMY |
+| 16 | 4 distanze densità vs N, dominio ristretto (log p > −10) | CGMY |
+| 17 | PDF & log-PDF, N=6 e N=16, dominio ristretto | CGMY |
 | Tabella 2 | Tempi CPU: COS, Hermite N=16, Logistica N=16 | VG, NIG, CGMY, Heston |
 
 Tutte le figure senza suffisso usano i coefficienti stimati ĉ del sistema lineare [eq. 15–16]. Solo le Figure 8 e 12 hanno una copia extra `_c_fourier`, costruita con i cⱼ Fourier esatti [eq. 9]. Motivo: sul dominio Heston L=4 il sistema per ĉ è numericamente instabile (Ĉ₀ underflow, distanze NaN o esplose a N≥10), mentre le figure di Gambaro mostrano la Logistica che continua a decrescere fino a N=16 con distanze ≪ 1. I cⱼ Fourier riproducono quel comportamento e una densità Logistica usabile (Fig. 12); non sostituiscono lo stimatore da momenti, servono solo come confronto su quel caso patologico.
@@ -373,7 +375,7 @@ b = k₁ + 4·√(k₂ + √k₄)
 ```
 dove k₁, k₂, k₄ sono il 1°, 2° e 4° cumulante della distribuzione.
 
-**Dominio ristretto Heston** (usato in Fig. 7 e 11): il dominio viene ristretto finché `log(p_COS(x)) > −10` ovunque su I (euristica del paper: `|clr(p)| < 10`, ovvero `p(x) > 5×10⁻⁵`).
+**Dominio ristretto** (Heston: Fig. 7 e 11; CGMY: Fig. 16 e 17): il dominio viene ristretto finché `log(p_COS(x)) > −10` ovunque su I (euristica del paper: `|clr(p)| < 10`, ovvero `p(x) > 5×10⁻⁵`). Per il CGMY il criterio scatta perché al bordo destro del dominio L=4 si ha `|clr(b)| = 10.8 > 10` (coda destra leggera, M=12, su dominio simmetrico): il criterio esatto taglierebbe a x* = 5.32, il proxy taglia a 5.40 (differenza ~1.5%, shift `E_ν[log p] ≈ 0.17`).
 
 ---
 
@@ -454,7 +456,7 @@ Per ogni N = 1, 2, ..., N_MAX = 20:
 1. **Costruisce Ã_N** (N×N): cicli annidati su i,j,k con Δ_{p,q,r} precalcolati.
 2. **Costruisce A_N** (N×N): combinazione pesata via Q_n e Ã_N.
 3. **Costruisce b_N** (vettore N): dai momenti di Hermite.
-4. **Risolve**: `scipy.linalg.solve` (decomposizione LU). Fallback a `numpy.linalg.lstsq` se cond(A_N) > 10¹⁴ (sistemi logistici mal condizionati ad alto N).
+4. **Risolve**: `scipy.linalg.solve` (decomposizione LU), come nel paper (nessuna regolarizzazione). Un precedente fallback a `numpy.linalg.lstsq` per cond(A_N) > 10¹⁴ è stato rimosso: la soluzione a norma minima non risolveva eq. (15) (per CGMY a N=16: residuo ≈ ‖b‖, ĉ→0, falsa esplosione nelle figure), mentre la LU è backward-stable e a N=16 dà residuo ~10⁻⁸ e d₂(ĉ, c) = 0.016.
 
 ---
 
@@ -525,6 +527,11 @@ Tutte le distanze sono calcolate via regola dei trapezi sul dominio troncato I.
 | 10 (NIG) | Stesso per NIG | `fig_density_comparison` | — |
 | 11 (Heston) | Stesso, dominio ristretto | `fig_density_comparison` | — |
 | 12 (Heston) | Stesso, dominio L=4 | `fig_density_comparison` | senza curva Hermite |
+| 13 (CGMY) | Convergenza coefficienti vs N | `fig_coeff_convergence` | — |
+| 14 (CGMY) | 4 distanze vs N | `fig_density_distances` | dominio L=4 |
+| 15 (CGMY) | PDF & log-PDF, N=6 & N=16 | `fig_density_comparison` | — |
+| 16 (CGMY) | 4 distanze vs N | `fig_density_distances` | dominio ristretto |
+| 17 (CGMY) | PDF & log-PDF, N=6 & N=16 | `fig_density_comparison` | dominio ristretto |
 
 Per rigenerare individualmente:
 ```python
@@ -654,7 +661,7 @@ Impostando j=1 (caso 1D, `mʰ_{k,0} = mʰₖ`) si ottiene esattamente `b_i = −
 
 2. **Momenti NIG:** con i parametri dell'Appendice A otteniamo skewness≈0.223 e kurtosi≈0.966 vs i valori arrotondati 0.2 e 1 della Tabella 1 del paper. Discrepanza attesa: il paper arrotonda a 1 decimale.
 
-3. **Convergenza Logistica ad alto N:** il sistema lineare diventa mal condizionato per la base Logistica a N≥17 (cond(A) > 10¹⁴). Si usa least-squares come fallback. Il paper non affronta esplicitamente questo caso. Per Heston sul dominio pieno (L=4) la serie logistica resta instabile oltre N≈9, mentre nel paper converge fino a N=16: sospetto residuo sui momenti di Hermite di ordine alto (via mpmath), non sul peso della base.
+3. **Condizionamento ad alto N:** cond(A) cresce di ~20× per ogni N (per CGMY: 1.7×10¹⁵ a N=16, contro 1.3×10¹⁴ del VG e 3.5×10¹³ del NIG). La causa è la crescita dei momenti di Hermite analitici su ℝ (per CGMY mʰ₃₀ ≈ 1.7×10¹⁰: oltre il 97% della massa dei momenti di ordine ≥16 sta fuori da [a,b]). La LU resta backward-stable nel range dei grafici (N ≤ 16); il vecchio fallback least-squares è stato rimosso perché produceva soluzioni che non risolvevano il sistema (vedi Step 8). Per Heston sul dominio pieno (L=4) la serie logistica resta instabile oltre N≈9, mentre nel paper converge fino a N=16: sospetto residuo sui momenti di Hermite di ordine alto (via mpmath), non sul peso della base.
 
 4. **Parametri VG:** i valori sigma=0.2, nu=2/3, theta=0, mu=0 sono inferiti dal vincolo "skewness=0, kurtosi eccesso=2" (poiché kurtosi eccesso = 3ν → ν=2/3). Il paper cita Heston & Rossi (2016) senza listare i parametri esplicitamente.
 

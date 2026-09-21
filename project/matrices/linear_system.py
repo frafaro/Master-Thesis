@@ -127,22 +127,28 @@ def build_b(N: int, mh: np.ndarray) -> np.ndarray:
     return b
 
 
-def solve_system(A: np.ndarray, b: np.ndarray,
-                 cond_threshold: float = 1e14) -> Tuple[np.ndarray, float]:
+def solve_system(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, float]:
     """
-    Solve A @ c = b.
-    Uses lstsq if the system is ill-conditioned (cond > cond_threshold)
-    to avoid divergence; otherwise uses LU decomposition.
-    Returns (c_hat, cond_number).
+    Solve A @ c = b via decomposizione LU (come nel paper: Gambaro risolve
+    il sistema eq. 15 direttamente, senza regolarizzazione).
+
+    Nota storica: una versione precedente passava a np.linalg.lstsq quando
+    cond(A) > 1e14. Tolto perché fuorviante: lstsq con rcond automatico
+    scarta i valori singolari piccoli e restituisce la soluzione a norma
+    minima del sistema TRONCATO, che non risolve eq. 15 (per CGMY a N=16:
+    residuo ||A c - b|| ≈ 0.99 ≈ ||b||, ||c|| collassa da 0.78 a 0.05,
+    d2 verso i coefficienti di Fourier salta da 0.018 a 0.78 → falsa
+    "esplosione" nelle figure). La LU è backward-stable e a N=16 dà
+    residuo ~1e-8 e d2 = 0.016. L'unico effetto reale del cattivo
+    condizionamento si vede oltre N≈16, fuori dal range dei grafici.
+
+    Returns (c_hat, cond_number). cond è restituito a scopo diagnostico.
     """
     import warnings
-    cond = np.linalg.cond(A) #calcolo il numero di condizionamento della matrice A, 
-    if cond > cond_threshold: #se il numero di condizionamento è maggiore della tolleranza allora si usa il metodo dei minimi quadrati, succede principalmente per la base logistic che ha un numero di condizionamento elevato
-        c_hat, _, _, _ = np.linalg.lstsq(A, b, rcond=None) #risolve il sistema lineare usando il metodo dei minimi quadrati. c_hat = arg min ||A @ c - b||_2
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            c_hat = solve(A, b) #risolve il sistema lineare usando la decomposizione LU. c_hat = A^-1 @ b quando il sistema è ben condizionato
+    cond = np.linalg.cond(A) #numero di condizionamento, solo diagnostico
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        c_hat = solve(A, b) #decomposizione LU: c_hat = A^-1 @ b
     return c_hat, cond
 
 

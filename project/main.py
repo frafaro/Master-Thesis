@@ -331,9 +331,12 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
             x_full, a_full, b_full, p_cos_full, nu_gauss, nu_logis)
         _save_dist_full(dist_h_fou, dist_l_fou, "c_fourier")
 
-    # ── 14. Figure 7 (Heston restricted domain) ───────────────────────────────
-    if is_heston and fig_nums.get("dist_restr") is not None:
-        print("  [14] Restricted-domain distances for Heston...")
+    # ── 14. Restricted-domain distances (Fig 7 Heston, Fig 16 CGMY) ───────────
+    # Criterio: |clr(p)| < 10 (Gambaro p.13), implementato col proxy
+    # log p > -CLR_TOL in utils.quadrature.clr_domain. Per CGMY il criterio
+    # scatta perché |clr(b)| = 10.8 > 10 al bordo destro del dominio L=4.
+    if fig_nums.get("dist_restr") is not None:
+        print(f"  [14] Restricted-domain distances for {model_name}...")
         a_restr, b_restr = clr_domain(
             lambda x: np.log(np.maximum(cos_density(x, cf, a_full, b_full, N_COS), 1e-300)),
             cumulants_dict, L_start=L, clr_tol=CFG.CLR_TOL)
@@ -365,7 +368,7 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     if is_heston:
         _save_dens_full(get_density_fou_hermite, get_density_fou_logistic, "c_fourier")
 
-    if is_heston and fig_nums.get("dens_restr") is not None:
+    if fig_nums.get("dens_restr") is not None:
         ph6 = get_density_hat_hermite(N6, x_restr, a_restr, b_restr)
         ph16 = get_density_hat_hermite(N16, x_restr, a_restr, b_restr)
         pl6 = get_density_hat_logistic(N6, x_restr, a_restr, b_restr)
@@ -435,7 +438,8 @@ def main(args):
             cf_func=cgmy_mod.characteristic_function,
             raw_moments_func=cgmy_mod.raw_moments,
             params=CFG.CGMY_PARAMS,
-            fig_nums={"coeff": 13, "dist_full": 14, "dens_full": 15},
+            fig_nums={"coeff": 13, "dist_full": 14, "dens_full": 15,
+                      "dist_restr": 16, "dens_restr": 17},
             timing_results=timing,
         )
 

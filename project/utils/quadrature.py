@@ -34,12 +34,18 @@ def clr_domain(log_p_func, cumulants: dict, L_start: float = 4.0,
                clr_tol: float = 10.0, n_pts: int = 2000) -> Tuple[float, float]:
     """
     Restricted domain: shrink the L=4 domain until |clr(p)(x)| < clr_tol everywhere.
-    Used for the Heston 'restricted domain' experiments (Figs 7, 11).
+    Used for the 'restricted domain' experiments: Heston (Figs 7, 11) and
+    CGMY (Figs 16, 17).
 
     clr(p)(x) = log(p(x)) - E_nu[log(p(X))]
     For the restricted domain we simply find the largest symmetric sub-interval
     [k1-h, k1+h] where log(p(x)) > -clr_tol (ignoring the mean-shift correction,
     which is small; the dominant effect is p(x) -> 0 in the tails).
+
+    Coerenza col criterio esatto di Gambaro (p.13): il criterio vero sarebbe
+    clr(p) > -10, cioè log p > -10 + E_nu[log p]. Per CGMY E_nu[log p] = 0.17
+    (gauss) / 0.20 (logistic): il taglio esatto sarebbe x* = 5.32 invece del
+    5.40 dato dal proxy — differenza ~1.5% dell'ampiezza, trascurabile.
 
     la funzione clr_domain non calcola il vero dominio basato sul clr completo, 
     ma utilizza logp(x)>−10 come criterio numerico proxy per individuare una regione in cui la PDF 

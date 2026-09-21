@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guida alle figure — replica Gambaro (2024)</title>
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --card: #fff;
+      --ink: #1c1b16;
+      --muted: #5c5a52;
+      --line: #e2dfd6;
+      --accent: #1f4e79;
+      --ok: #1f6b3a;
+      --mid: #8a5a00;
+      --no: #9b1c1c;
+      --ext: #4338ca;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font: 16px/1.55 "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header {
+      background: var(--ink);
+      color: #f6f5f1;
+      padding: 2.2rem 1.4rem 1.6rem;
+    }
+    header .wrap, main, nav.toc .wrap { max-width: 980px; margin: 0 auto; }
+    header h1 { font-size: 1.65rem; font-weight: 650; margin: 0 0 .4rem; letter-spacing: -.02em; }
+    header p { margin: 0; color: #c8c4b8; max-width: 46rem; }
+    nav.toc {
+      position: sticky; top: 0; z-index: 5;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    nav.toc .wrap {
+      display: flex; flex-wrap: wrap; gap: .35rem .5rem;
+      padding: .55rem 1.4rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: .78rem;
+    }
+    nav.toc a {
+      color: var(--accent); text-decoration: none;
+      padding: .15rem .4rem; border-radius: 4px;
+    }
+    nav.toc a:hover { background: #eef3f8; }
+    main { padding: 1.6rem 1.4rem 4rem; }
+    .note {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.1rem;
+      margin: 0 0 1.8rem;
+    }
+    .note h2 { margin: 0 0 .5rem; font-size: 1.05rem; }
+    .note ul { margin: .3rem 0 0; padding-left: 1.2rem; }
+    .fig {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.15rem 1.2rem 1.3rem;
+      margin: 0 0 1.5rem;
+    }
+    .fig h2 { margin: 0 0 .15rem; font-size: 1.22rem; }
+    .meta {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: .78rem; color: var(--muted); margin-bottom: .8rem;
+    }
+    .fig img {
+      width: 100%; height: auto; display: block;
+      border: 1px solid var(--line); background: #fff; margin: .3rem 0 1rem;
+    }
+    dl { margin: 0; }
+    dt {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+      text-transform: uppercase; color: var(--accent); margin: .85rem 0 .2rem;
+    }
+    dd { margin: 0; }
+    .badge {
+      display: inline-block;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: .72rem; font-weight: 700; letter-spacing: .03em;
+      text-transform: uppercase;
+      padding: .12rem .45rem; border-radius: 999px;
+      vertical-align: middle; margin-left: .35rem;
+    }
+    .ok { background: #e3f4e9; color: var(--ok); }
+    .mid { background: #f8edcc; color: var(--mid); }
+    .no { background: #f8e1e1; color: var(--no); }
+    .ext { background: #e8e7fb; color: var(--ext); }
+    .contest {
+      margin-top: 1rem; padding: .85rem 1rem;
+      background: #faf6f0; border: 1px solid #ead9c1; border-radius: 6px;
+      font-size: .94rem;
+    }
+    .contest strong { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .72rem;
+      letter-spacing: .04em; text-transform: uppercase; color: var(--mid); display: block;
+      margin-bottom: .35rem; }
+    footer {
+      max-width: 980px; margin: 0 auto; padding: 0 1.4rem 2.5rem;
+      color: var(--muted); font-size: .88rem;
+    }
+    code { font-family: ui-monospace, Menlo, monospace; font-size: .88em; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Guida alle figure della replica Gambaro (2024)</h1>
+    <p>
+      Per ogni grafico: che cosa mostra, come si legge, comportamento di Hermite e Logistica,
+      coerenza con il paper. Le densità senza suffisso usano i <em>ĉ</em> del sistema lineare (eq. 15–16).
+      Solo le Figure 8 e 12 hanno una copia <code>_c_fourier</code> (eq. 9).
+    </p>
+  </div>
+</header>
+<nav class="toc">
+  <div class="wrap">
+    <a href="#f1">1 VG</a>
+    <a href="#f2">2 NIG</a>
+    <a href="#f3">3 Heston</a>
+    <a href="#f4">4 CLR</a>
+    <a href="#f4b">4+ CGMY</a>
+    <a href="#f5">5 VG</a>
+    <a href="#f6">6 NIG</a>
+    <a href="#f7">7 Heston</a>
+    <a href="#f8">8 ĉ</a>
+    <a href="#f8f">8 Fourier</a>
+    <a href="#f9">9 VG</a>
+    <a href="#f10">10 NIG</a>
+    <a href="#f11">11 Heston</a>
+    <a href="#f12">12 ĉ</a>
+    <a href="#f12f">12 Fourier</a>
+    <a href="#f13">13 CGMY</a>
+    <a href="#f14">14 CGMY</a>
+    <a href="#f15">15 CGMY</a>
+    <a href="#f16">16 CGMY ristr.</a>
+    <a href="#f17">17 CGMY ristr.</a>
+  </div>
+</nav>
+<main>
+
+<div class="note">
+  <h2>Come leggere i grafici (vale per tutti)</h2>
+  <ul>
+    <li><strong>ĉ</strong> = soluzione di <em>A ĉ = b</em> dai momenti. A ogni <em>N</em> il sistema si ricalcola da capo. <em>Q = I</em> per Hermite, <em>Q = L H<sup>−1</sup></em> per la Logistica: stesso polinomio, coordinate diverse. Per questo <em>L<sup>1</sup>/L<sup>2</sup>/log-L<sup>2</sup></em> di Hermite e Logistica coincidono (fino a dove il sistema è risolvibile). Aitchison no: cambia il peso <em>ν</em>.</li>
+    <li><strong>c Fourier</strong> = ∫ clr(<em>p</em><sub>COS</sub>) φ<sub>j</sub> ν dx (eq. 9). Dipende dalla base e da <em>ν</em>: <em>c<sup>H</sup> ≠ c<sup>L</sup></em>. Le Figure 1–3 e 13 misurano <em>d<sub>2</sub>(ĉ, c)</em>, non |ĉ| e non l’errore di troncamento.</li>
+    <li>Asse <em>x</em> “number of moments” / <em>N</em> = ordine del sistema e numero di termini nella somma di <em>p̂<sub>N</sub></em>.</li>
+    <li><strong>Nota (21/09/2026):</strong> il fallback <code>lstsq</code> per cond(A) &gt; 10<sup>14</sup> è stato <em>rimosso</em> da <code>solve_system</code> (non è nel paper; la soluzione a norma minima non risolveva l’eq. 15: residuo ≈ ‖b‖). Le Figure 13–15 sono state rigenerate con LU pura; le figure Heston 3/7/11/12 sono <em>precedenti</em> alla modifica e i loro crolli Hermite a N = 14–16 riflettono ancora il vecchio fallback.</li>
+  </ul>
+</div>
+
+<article class="fig" id="f1">
+  <h2>Figura 1 — Coefficienti VG <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 1 · file <code>figure_01_coeff_vg.pdf</code></p>
+  <img src="img/figure_01_coeff_vg.png" alt="Figura 1: d2 coefficienti VG, Hermite e Logistica" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Due pannelli (Hermite | Logistica). Asse x: N = 4…16 (momenti usati nel sistema). Asse y: √Σ (ĉ<sub>j</sub><sup>(N)</sup> − c<sub>j</sub>)<sup>2</sup>. Blu: solo j = 1…min(6,N). Arancione: tutti gli N coefficienti. Nessuna densità, nessun troncamento Fourier j &gt; N.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Distanza euclidea, in coordinate della base, tra lo stimatore a momenti e la Fourier-CLR della COS. Le scale y dei due pannelli <em>non</em> si confrontano (c<sup>H</sup> ≠ c<sup>L</sup>). Il blu Hermite che <em>continua a scendere</em> dopo N = 6 è la prova che ĉ<sub>1</sub>…ĉ<sub>6</sub> di ĉ<sup>(16)</sup> non sono quelli di ĉ<sup>(6)</sup>: se si congelasse ĉ<sup>(6)</sup>, il blu sarebbe piatto.</dd>
+    <dt>Hermite</dt>
+    <dd>Blu ≈ 0.11 → 0.047; arancione ≈ 0.11 → 0.083 (non entrambi a 0.05). Coincidono fino a N = 6 per costruzione della somma. Poi scaletta pari/dispari: i dispari non spostano ĉ (m<sup>h</sup> dispari = 0). Nessuno spike a N = 16.</dd>
+    <dt>Logistica</dt>
+    <dd>Blu: scaletta ≈ 0.047 → 0.039. Arancione: calo a N = 6 poi <em>risale</em> verso ≈ 0.052. Scala più bassa ≠ stima migliore. L’arancione in salita non contraddice Fig. 5: qui il target è c<sup>L</sup>, là è p<sub>COS</sub>.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Layout sì. Parametri VG (σ = 0.2, ν = 2/3, θ = 0) inferiti da Heston–Rossi (skew 0, exkurt 2), non dall’appendice di Gambaro. Non è l’eq. 17: manca Σ<sub>j&gt;N</sub> c<sub>j</sub><sup>2</sup>. Ylabel «square root» vs «root square» sono etichette copiate, non due metriche.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico VG</strong>
+    Relatore: (1) perché il blu scende dopo N = 6 invece di appiattirsi?
+    (2) l’arancione Logistic che sale è compatibile con L<sup>1</sup> in Fig. 5 che scende?
+    (3) che curva si otterrebbe paddando ĉ<sup>(6)</sup> con zeri?
+  </div>
+</article>
+
+<article class="fig" id="f2">
+  <h2>Figura 2 — Coefficienti NIG <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 2 · <code>figure_02_coeff_nig.pdf</code> · skew ≈ +0.22 (m<sub>1</sub> = 0.05, non μ = 0)</p>
+  <img src="img/figure_02_coeff_nig.png" alt="Figura 2: d2 coefficienti NIG" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Stesso oggetto della Fig. 1, sul NIG.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Il NIG è il caso più pulito per ĉ<sup>H</sup> vs c<sup>H</sup>. Non è «convergenza dei coefficienti» in generale: a N = 16 Hermite <em>all</em> vale 0.0076, Logistic <em>all</em> vale 0.22. Due pannelli, due storie. Non è l’eq. (17): manca il troncamento Σ<sub>j&gt;N</sub> c<sub>j</sub><sup>2</sup>.</dd>
+    <dt>Hermite</dt>
+    <dd>Scende da ≈ 0.04 a 0.0076 (first-6 a 0.0029). Quasi monotona, con micro-risalite (N = 5→6, 7→8). Nessun lstsq a N = 16, ma cond(A) = 3.5×10<sup>13</sup> già alto. ĉ<sub>2</sub> resta ≈ −0.74: il modo quadratico non deve andare a zero.</dd>
+    <dt>Logistica</dt>
+    <dd>First-6: picco a N = 7 poi plateau ≈ 0.06. <em>All</em>: zigzag, a N = 16 è 0.22 (peggio di N = 4). Oscillano le coordinate Q, non p̂ (vedi Fig. 6). Nessun lstsq: l’oscillazione non è il fallback.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Layout sì. Il testo «very good convergence» per <em>entrambe</em> le basi NIG è smentito dal pannello destro. Skew/kurtosi esatti: 0.223 e 0.966, non i 0.2 e 1 di Tabella 1.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico NIG</strong>
+    Per N ≤ 6 blu e arancione coincidono per costruzione (K = min(6,N)), non è un risultato.
+    Relatore: (1) Fig. 2 vs Fig. 6 — d<sub>2</sub> Logistic 0.22 e L<sup>1</sup> 0.006 nello stesso N = 16: cosa misura Fig. 2?
+    (2) cond(A<sub>H</sub>) = 3.5×10<sup>13</sup>: in che senso il sistema NIG è «ben posto»?
+    (3) perché Gambaro scrive convergenza «very good» anche per la Logistica?
+  </div>
+</article>
+
+<article class="fig" id="f3">
+  <h2>Figura 3 — Coefficienti Heston <span class="badge mid">parziale</span></h2>
+  <p class="meta">Gambaro Fig. 3 · <code>figure_03_coeff_heston.pdf</code> · skew −1.2, exkurt 2.5</p>
+  <img src="img/figure_03_coeff_heston.png" alt="Figura 3: d2 coefficienti Heston" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>d<sub>2</sub>(ĉ<sup>(N)</sup>, c) senza coda di troncamento, N = 4…16. Non è |ĉ|, non è cond(A), non è la densità. Scale y incommensurabili (Hermite ~ 1.2, Logistica ~ 100) e ylabel diversi. I c<sub>j</sub> Fourier sono CLR di p<sub>COS</sub> su L = 4 dove |clr| ~ 25 a destra: il bersaglio è già fuori da |clr| &lt; 10. Non è Heston (1993): parametri calibrati a skew −1.2 e exkurt 2.5, CF Gatheral, cumulanti mpmath.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Cinque parametri per due momenti: la legge non è identificata. A N = 14 Logistica d<sub>2</sub> ~ 100 implica ‖ĉ − c‖ ~ 100, quindi ĉ <em>è</em> esploso. Il grafico mescola momenti numerici, cond(A) e lstsq. Per N ≤ 6 blu ≡ arancione per costruzione.</dd>
+    <dt>Hermite</dt>
+    <dd>Oscilla (minimo ~ N = 9, tuffo a N = 13, spike a N = 16 ≈ 1.2). Blu e arancione sovrapposti dopo N = 6 dicono che l’errore non è solo nei gradi alti. Il tuffo a 13 <em>non</em> è il lstsq CGMY (quello schiaccia ĉ → 0). Da questa figura sola non si distingue LU instabile vs minimi quadrati.</dd>
+    <dt>Logistica</dt>
+    <dd>«Piccolo fino a N ≈ 8» è relativo a una scala da 100: a N = 8 si è già fuori dalla scala Hermite. A N = 14 first-6 ~ 55 e all ~ 100: l’errore non è tutto nei gradi alti. Poi la curva <em>scende</em> a N = 16: non è monotonia di instabilità.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Parziale. Catturare «l’instabilità» non è replicare Fig. 3. Senza overlay sul PDF di Gambaro il picco a 100 è inverificabile.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) perché Fig. 3 omette cond(A<sub>N</sub>), residuo e ‖ĉ‖<sub>2</sub>?
+    (2) i cumulanti di ordine ≥ 20 via mpmath.diff: quanto è rumore di differenziazione in Ã?
+    (3) in che senso è «Heston» se non sono i parametri 1993 e (skew, curtosi) non fissano i momenti alti?
+  </div>
+</article>
+
+<article class="fig" id="f4">
+  <h2>Figura 4 — CLR di tre PDF <span class="badge mid">parziale</span></h2>
+  <p class="meta">Gambaro Fig. 4 · <code>figure_04_clr_three_pdfs.pdf</code> · tre I* diversi, ν gaussiana per tutti</p>
+  <img src="img/figure_04_clr_three_pdfs.png" alt="Figura 4: CLR VG NIG Heston" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>clr(p)(x*) = log p(x*) − E<sub>ν</sub>[log p] delle tre densità COS standardizzate. Linee a ±10: soglia usata per il dominio ristretto Heston.</dd>
+    <dt>Interpretazione</dt>
+    <dd>clr(p) = log p<sub>COS</sub> − E<sub>ν gauss</sub>[log p] su tre I* (eq. 22, L = 4). Le linee ±10 <em>non</em> sono il dominio ristretto: <code>clr_domain</code> taglia su log p &gt; −10, senza ricalcolare la CLR e senza simmetria. Heston a destra ~ −25: <em>fuori</em> dal regime |clr| &lt; 10 del paper. A sinistra Heston è la <em>meno</em> negativa (~ −6 vs VG −7.5, NIG −9) ⇒ coda sinistra più pesante e destra più leggera tra i tre. VG esattamente pari; NIG coda destra più pesante. NIG non è il punto medio (kurtosi minima). |clr| &lt; 10 dice che I è legale per B<sup>2</sup>, non che ĉ sia accurato.</dd>
+    <dt>Hermite / Logistica</dt>
+    <dd>Qui non ci sono espansioni: solo p<sub>COS</sub>. |clr| NIG max = 9.06, sfiora la soglia 10 — L = 4 è ancora legale, non «largamente dentro».</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Overlay a tre sì. Heston su questo L = 4 è fuori dal regime di lavoro del paper (|clr| &lt; 10). Senza i parametri di Gambaro non è nemmeno lo stesso processo. No se si attribuisce al NIG la coda sinistra da equity.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico NIG</strong>
+    «Tutti i modelli hanno coda sinistra più pesante» è falso. Relatore: (1) μ = 0, θ = 0.05, media 0.05 e skew +0.223: in che senso è il caso intermedio se la kurtosi è la più piccola e il segno dello skew è l’opposto di Heston?
+    (2) perché la CLR usa ν gaussiana anche quando si parla di Logistica?
+  </div>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) a x* ≈ 3 già clr ≈ −10: perché Fig. 8/12 usano comunque L = 4?
+    (2) con ν logistica il crollo a −25 resterebbe qualitativamente lo stesso?
+    (3) quanto del −25 è legge di Heston e quanto è COS+clipping sulla coda destra?
+  </div>
+</article>
+
+<article class="fig" id="f4b">
+  <h2>Figura 4 (quattro) — CLR con CGMY <span class="badge ext">estensione</span></h2>
+  <p class="meta">Non è nel paper · <code>figure_04_clr_four_pdfs.pdf</code></p>
+  <img src="img/figure_04_clr_four_pdfs.png" alt="Figura 4 con CGMY" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Stesso CLR, più il CGMY (G = 7 &lt; M = 12 ⇒ coda sinistra più grassa).</dd>
+    <dt>Interpretazione</dt>
+    <dd>Il CGMY sta tra NIG e Heston sulla coda destra, non è il più estremo: Heston scende ancora di più. A x* ≈ +6, |clr| del CGMY supera 10 (≈ 10.8): siamo fuori dalla tolleranza del paper sul 5% del dominio.</dd>
+    <dt>Hermite / Logistica</dt>
+    <dd>Assenti (solo COS).</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Non applicabile: figura extra. Il messaggio “coda sinistra più pesante” è vero per CGMY e Heston, falso come regola globale (NIG è right-skew).</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico CGMY</strong>
+    Qui non c’è né Hermite né Logistica: è solo COS. Inventare un vantaggio di base da questa figura è un errore di oggetto.
+    Relatore: (1) lo zero del CLR è E<sub>ν gauss</sub>[log p] — con ν logistica la lettura delle code cambierebbe?
+    (2) |clr(b*)| = 10.79 &gt; 10 sul 5% di I*: come si commentano code fuori dalla tolleranza di Gambaro?
+    (3) perché vendere un overlay extra come replica della Fig. 4?
+  </div>
+</article>
+
+<article class="fig" id="f5">
+  <h2>Figura 5 — Distanze densità VG <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 5 · N = 2…16 · ĉ</p>
+  <img src="img/figure_05_distances_vg.png" alt="Figura 5 distanze VG" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Quattro distanze tra p̂<sub>N</sub> e p<sub>COS</sub>: (a) Aitchison pesata da ν, (b) L<sup>2</sup> sui log non pesata, (c) L<sup>1</sup>, (d) L<sup>2</sup>. A ogni N si costruisce p̂<sub>N</sub> = Ĉ<sub>0</sub> exp(Σ<sub>j=1</sub><sup>N</sup> ĉ<sub>j</sub> φ<sub>j</sub>).</dd>
+    <dt>Interpretazione</dt>
+    <dd>Convergenza della densità, non dei coefficienti. (b)(c)(d) <em>devono</em> coincidere: stesso polinomio. (a) può differire: stesso p̂, ν diversa — Aitchison Hermite più bassa perché ω concentra al centro, non perché Hermite «fitta meglio». Scaletta: N = 2 ≡ N = 3, calo a N = 4, plateau N = 5, calo a N = 6 (b<sub>6</sub> = −√5 m<sup>h</sup><sub>4</sub> è il primo ingresso diretto della kurtosi). Gobba log-L<sup>2</sup> a N ≈ 5–7 attesa; dopo N = 11 il log-L<sup>2</sup> <em>risale</em> ≈ 1.0 → 1.4 mentre L<sup>1</sup>/L<sup>2</sup> continuano a scendere: il log pesa le code (U-turn Fig. 9), L<sup>1</sup> pesa il corpo.</dd>
+    <dt>Hermite</dt>
+    <dd>Su (b)(c)(d) è la Logistica. L<sup>1</sup> ≈ 0.20 → 0.078. Nessun crollo a N = 16. Quattro pannelli ≠ quattro vittorie Hermite.</dd>
+    <dt>Logistica</dt>
+    <dd>Non un secondo metodo sulla densità: altra coordinata dello stesso p̂. Aitchison più alta perché ν<sub>L</sub> ha code più pesanti e vede il mismatch di coda. Nessun picco catastrofico a N = 6 (f al bordo gestibile).</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Layout e scaletta da simmetria: sì. «Distanze decrescenti» sul log-L<sup>2</sup> è falso (rimbalzo post N = 11). Se Gambaro separa visibilmente Hermite e Logistic su L<sup>1</sup>/L<sup>2</sup>, o il paper offsetta le curve, o «Hermite outperforma» è incompatibile con Q cambio di base.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico VG</strong>
+    Relatore: se Q è cambio di base, quale pannello si può citare per «Hermite outperforma la Logistica» senza barare sulla geometria ν? Cosa misura la gobba a N = 6 più il rimbalzo del log dopo N = 11?
+  </div>
+</article>
+
+<article class="fig" id="f6">
+  <h2>Figura 6 — Distanze densità NIG <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 6 · ĉ</p>
+  <img src="img/figure_06_distances_nig.png" alt="Figura 6 distanze NIG" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Come Fig. 5, sul NIG.</dd>
+    <dt>Interpretazione</dt>
+    <dd>L<sup>1</sup> e L<sup>2</sup> scendono in modo monotono (0.096 → 0.006). Il log-L<sup>2</sup> <em>no</em>: picco a N = 3 (4.15), gobba a N = 5, risale N = 9→12. «Tutte le distanze scendono» è falso. H = L su (b)(c)(d) perché è la <em>stessa</em> densità (max |p̂<sub>H</sub>−p̂<sub>L</sub>| ≈ 10<sup>−15</sup>), non perché due metodi siano altrettanto bravi. A N = 16 le code sono troppo sottili, non «giuste».</dd>
+    <dt>Hermite</dt>
+    <dd>Aitchison 0.119 → 0.0075. Nessun lstsq a N ≤ 16; cond = 3.5×10<sup>13</sup>. f(right) = −8.14: non esplode (contrasto CGMY), ma sottostima p(a).</dd>
+    <dt>Logistica</dt>
+    <dd>Stesso p̂ su L<sup>1</sup>/L<sup>2</sup>/log. Aitchison a N = 16 è 0.012 (+63% vs Hermite): ν<sub>L</sub> pesa di più le code sottostimate. Fig. 2 <em>all</em> a 0.22 coesiste con L<sup>1</sup> a 0.006 — ruoli distinti (coordinate vs densità).</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Layout sì. «Hermite slightly outperforms Logistic» (Gambaro su Fig. 10) su (c)(d) della replica <em>non può</em> essere vero: stessa funzione. Resta solo Aitchison, che confronta due ν.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico NIG</strong>
+    Pannelli (c)(d) con due curve sono ridondanti se non si dichiara p̂<sub>H</sub> = p̂<sub>L</sub>.
+    Relatore: in che senso empirico Hermite è migliore, se Aitchison usa due prodotti interni diversi?
+  </div>
+</article>
+
+<article class="fig" id="f7">
+  <h2>Figura 7 — Distanze Heston, dominio ristretto <span class="badge mid">parziale</span></h2>
+  <p class="meta">Gambaro Fig. 7 · euristica log p &gt; −10, non |clr| &lt; 10 · ĉ</p>
+  <img src="img/figure_07_distances_heston_restricted_domain.png" alt="Figura 7 Heston ristretto" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Quattro distanze su I<sub>restr</sub> scelto dove log p<sub>COS</sub> &gt; −10 (2000 punti, primo/ultimo indice). Non ricalcola la CLR, non simmetrizza. Ĉ<sub>0</sub> su I<sub>restr</sub>; COS resta espanso su I<sub>full</sub>: si confronta una probabilità (massa 1) con una sotto-probabilità. L<sup>1</sup>/L<sup>2</sup> non sono invarianti. [a, b] non è stampato. Non confrontare 1-a-1 con Fig. 8.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Il taglio è quasi solo a destra (coda leggera); a sinistra I<sub>restr</sub> ≈ I<sub>L=4</sub>. «Fino a N ≈ 13 coincidono e scendono» è falso: Aitchison Hermite sta sotto (ν diversa); minimo a N = 4, gobba a N = 6; log-L<sup>2</sup> è un plateau N = 4…8.</dd>
+    <dt>Hermite</dt>
+    <dd>Crollo a N = 14–16. Fig. 11 a N = 16 è densità <em>piatta</em> (max ≈ 0.55) ⇒ più lstsq che esplosione LU. Soglia 10<sup>14</sup> non è nel paper. A N = 6 H = L al più su L<sup>1</sup>/L<sup>2</sup>/log, non su Aitchison.</dd>
+    <dt>Logistica</dt>
+    <dd>Picco L<sup>1</sup> ≈ 0.67, L<sup>2</sup> ≈ 1.2 a N = 3. Aitchison a N = 2 già ≈ 0.6; a N = 16 risale un poco. Sopravvivere su un I diverso da Fig. 8 non è superiorità della base sul modello Heston.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Il paper usa un dominio ristretto; questa euristica + C0 su I<sub>restr</sub> e COS su I<sub>full</sub> non è dichiarato essere l’esperimento di Gambaro. Convergenza fino a 13 e cadavere Hermite ≠ Fig. 7 del paper.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) qual è [a, b] numerico di Fig. 7, e perché non è in figura?
+    (2) L<sup>1</sup> tra p̂ (massa 1) e p<sub>COS</sub> (massa &lt; 1) cosa misura?
+    (3) cond(A), ‖ĉ‖<sub>2</sub> e residuo a N = 14, 16 prima di dire lstsq o «Hermite non ama Heston».
+  </div>
+</article>
+
+<article class="fig" id="f8">
+  <h2>Figura 8 — Distanze Heston L = 4, ĉ <span class="badge no">non replica il paper</span></h2>
+  <p class="meta">Stesso layout di Gambaro Fig. 8, ma coefficienti del sistema lineare · solo Logistica</p>
+  <img src="img/figure_08_distances_heston_l=4.png" alt="Figura 8 Heston L=4 c-hat" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>p̂<sub>N</sub> Logistica da ĉ vs COS su L = 4. Titolo PDF identico alla copia Fourier: dal file non si capisce che non è Gambaro. Hermite omessa è una scelta di plot, non una prova. Aitchison con ν logistica.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Non è Fig. 8 del paper. Il crollo visibile parte a N = 8 (L<sup>1</sup> → 2, L<sup>2</sup> → 20), non «dopo N ≈ 7–9». Aitchison a N = 6 è già ~ 1.9. log-L<sup>2</sup> a N = 9 ~ 10<sup>3</sup> poi le curve scompaiono (NaN/inf), non «vengono tagliate». A N ≥ 8 L<sup>1</sup> → 2 è la distanza massima tra due PDF: non c’è più densità. Underflow log ≈ −700 è Fig. 12 a N = 16, un altro oggetto.</dd>
+    <dt>Hermite</dt>
+    <dd>Non plottata. «Esploderebbe anche lei» è un controfattuale: ĉ<sup>H</sup> = ĉ<sup>L</sup> solo se entrambi i sistemi sono risolti. Nasconderla su L = 4 impedisce di vedere il fallimento.</dd>
+    <dt>Logistica</dt>
+    <dd>Aitchison accettabile solo a N = 3 (~ 0.4); altrove &gt; 1. L<sup>1</sup> «ok» solo a N = 4–7. Lo spazio vuoto fino a 16 è un buco numerico.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>No. Se Gambaro ha plottato lo stimatore a momenti, questa figura è un fallimento. Se ha plottato Fourier, il numero di figura è sbagliato. Lo split ĉ vs <code>_c_fourier</code> va nel titolo del PDF, non solo nel README.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) perché Fig. 8 e Fig. 8 <code>_c_fourier</code> hanno lo stesso titolo?
+    (2) a N = 8 L<sup>1</sup> ≈ 2: si sta ancora parlando di un’approssimazione in B<sup>2</sup>?
+    (3) se Gambaro Fig. 8 ha la Logistica decrescente, perché mostrare <em>questa</em> come Fig. 8 nella tesi?
+  </div>
+</article>
+
+<article class="fig" id="f8f">
+  <h2>Figura 8 Fourier — Heston L = 4, c eq. 9 <span class="badge mid">parziale</span></h2>
+  <p class="meta">Suffisso <code>_c_fourier</code> · altro stimatore, non ĉ</p>
+  <img src="img/figure_08_distances_heston_l=4_c_fourier.png" alt="Figura 8 Fourier" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>p<sub>N</sub> = Ĉ<sub>0</sub> exp(Σ c<sub>j</sub> L<sub>j</sub>) con c<sub>j</sub> Fourier-CLR su L = 4, non il matching di momenti. I c<sub>j</sub> sono trapezi su una CLR che a destra vale ~ −25. Non è «lo stesso plot»: è un altro coefficiente.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Aitchison 0.7 → 0.08 maschera la coda (ν<sub>L</sub>). Il picco a N = 4 non è una nota: L<sup>1</sup> ≈ 2, L<sup>2</sup> ≈ 5.3, log-L<sup>2</sup> ≈ 19. Dopo N = 5 il log-L<sup>2</sup> non va a 0: plateau ~ 3 fino a 16. «Distanze piccole» è Aitchison-washing. Matching visivo ≠ stesso estimatore.</dd>
+    <dt>Hermite</dt>
+    <dd>Non mostrata. Per i c<sub>j</sub> Fourier Hermite la teoria predice la proiezione L<sup>2</sup>(ω): è proprio lo strumento per testare se la Logistica è meglio sulle code. <code>logistic_only</code> lo cancella.</dd>
+    <dt>Logistica</dt>
+    <dd>Aitchison e, dopo N = 4, L<sup>1</sup>/L<sup>2</sup> scendono. Non è monotonia da manuale. Resta un’espansione fuori da |clr| &lt; 10.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Se Gambaro Fig. 8 è eq. 15, il badge «coerente» sta sull’estimatore sbagliato. Se è eq. 9, allora Fig. 8 senza suffisso è un fallimento spaccia to per capitolo. Il picco a N = 4 può già non coincidere col PDF di Gambaro.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) Gambaro Fig. 8 è eq. 15 o eq. 9?
+    (2) perché log-L<sup>2</sup> resta ~ 3 mentre Aitchison scende a 0.08 — quale metrica «conferma» il paper?
+    (3) ricostruire Hermite Fourier su L = 4: se funziona, dove sta «solo Logistica come il paper»?
+  </div>
+</article>
+
+<article class="fig" id="f9">
+  <h2>Figura 9 — PDF e log-PDF VG <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 9 · N = 6 e 16 · ĉ</p>
+  <img src="img/figure_09_density_vg.png" alt="Figura 9 densità VG" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>p̂<sub>N</sub>(ĉ) vs COS (N_COS = 4096, non la VG analitica) su I ≈ [−1.25, 1.25], scala originale. (a)(b) pdf N = 6 e 16; (c)(d) log. Rosso Hermite, blu Logistica: stessa funzione.</dd>
+    <dt>Interpretazione</dt>
+    <dd>VG leptocurtica: il modo è sottostimato (COS ≈ 2.75 vs p̂ ≈ 2.25 a N = 6, ≈ 2.4 a N = 16), simmetrico, non uno shift. (c): U-turn per |x| ≳ 0.9 (log p̂ risale a ≈ −3.5, COS a ≈ −7.5). È l’esponente <em>pari di grado 6</em> su I* largo: se il leading coeff è &gt; 0, log p̂ → +∞ ai bordi e Ĉ<sub>0</sub> schiaccia anche il picco. Non è un baco VG; le code vere sono esponenziali (log p ∼ −c|x|). (d): niente U-turn in su; over-decay (p̂ → −10 vs COS ≈ −7.5). Grado 16 con leading coeff &lt; 0.</dd>
+    <dt>Hermite</dt>
+    <dd>Indistinguibile dalla Logistica. Conferma Fig. 5(b–d).</dd>
+    <dt>Logistica</dt>
+    <dd>Sovrapposta. Chi «vede» la blu staccarsi sta leggendo lo stile dash-dot. Nessun vantaggio di ν sulla pdf Lebesgue.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Layout sì. U-turn a N = 6 è ciò che <em>deve</em> vedersi per un VG a kurtosi 2 con esponente di grado 6; se nel paper (c) è liscio, I è più stretto o N = 6 non è ĉ. N = 16: corpo migliore, code troppo sottili — non è convergenza uniforme su I.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico VG</strong>
+    Relatore: lo U-turn simmetrico a N = 6 è un difetto del VG (θ = 0, κ = 2) o la geometria di un esponente pari di grado 6 su |x*| ≈ 6? Perché la CLR COS in Fig. 4 resta pari e dentro ±10, e perché quella figura non autorizza nessuna classifica Hermite/Logistica?
+  </div>
+</article>
+
+<article class="fig" id="f10">
+  <h2>Figura 10 — PDF e log-PDF NIG <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 10 · ĉ</p>
+  <img src="img/figure_10_density_nig.png" alt="Figura 10 densità NIG" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Come Fig. 9, in scala originale I ≈ [−1.09, 1.19], non x*. Benchmark COS, non la NIG in forma chiusa. Hermite e Logistica sono la stessa funzione (errore di macchina).</dd>
+    <dt>Interpretazione</dt>
+    <dd>Il corpo a N = 16 è ottimo; le code no. Picco COS a x = 0.034 (altezza 2.19), non in 0 e non in m<sub>1</sub> = 0.05 (moda &lt; media, skew positiva). N = 6: code sovrastimate (p̂(a) ×12 vs COS). N = 16: code sottostimate (p̂(a) ×0.25). f(right) &lt; 0 evita l’esplosione, non certifica la coda. I pannelli PDF nascondono ciò che il log mostra.</dd>
+    <dt>Hermite</dt>
+    <dd>Non «batte» la Logistica: overlay a precisione macchina. A N = 16 il log a destra va a ≈ −8 vs COS ≈ −7.</dd>
+    <dt>Logistica</dt>
+    <dd>Identica. «Logistic peggiore sulle code» (Gambaro Fig. 10) qui non si vede. Quell’inferiorità, se c’è, sta in Fig. 2 e in Aitchison.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Layout sì. «Hermite slightly outperforms Logistic» sulla replica di Fig. 10 no. Presentare il NIG come stress test è fuorviante: è il caso più facile (exkurt &lt; 1, |clr| &lt; 10).</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico NIG</strong>
+    Relatore: se max |p̂<sub>H</sub> − p̂<sub>L</sub>| è 10<sup>−12</sup>, Fig. 6(b,c,d) e Fig. 10 mostrano una sola famiglia esponenziale di grado N. Perché Gambaro scrive che Hermite è leggermente migliore?
+  </div>
+</article>
+
+<article class="fig" id="f11">
+  <h2>Figura 11 — Densità Heston, dominio ristretto <span class="badge mid">parziale</span></h2>
+  <p class="meta">Gambaro Fig. 11 · ĉ</p>
+  <img src="img/figure_11_density_heston_restricted.png" alt="Figura 11 Heston ristretto" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>PDF/log su I<sub>restr</sub> a N = 6 e 16, ĉ, entrambe le basi vs COS. Stessi vizi di Fig. 7: euristica log p &gt; −10, C0 su I<sub>restr</sub>, COS su I<sub>full</sub>. Asse x originale ≈ [−1.55, 0.7], non x*: a sinistra quasi L = 4, a destra tagliato.</dd>
+    <dt>Interpretazione</dt>
+    <dd>N = 6: corpo coincide; a destra il log va a ~ −15 vs COS ~ −10, non «scende un po’». N = 16: Logistica sul corpo, con risalita al bordo destro; Hermite schiacciata (picco ~ 0.55). Quella forma è ĉ distrutto, non «Heston».</dd>
+    <dt>Hermite</dt>
+    <dd>A N = 6 è lo stesso polinomio della Logistica, non un successo della base gaussiana. A N = 16 inutile (max 0.55 vs COS ~ 2.05). Qui Hermite <em>non</em> è omessa: si vede il cadavere che Fig. 12 nasconde.</dd>
+    <dt>Logistica</dt>
+    <dd>Corpo buono sul ristretto, con C0 ricalcolato. Trasferire questo a Fig. 8/12 L = 4 è illecito. «Sembra Gambaro» senza overlay è estetica.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>N = 16 Hermite morto non è nel paper. Scaricare su lstsq/cond(A) è obbligatorio, ma allora non è una replica di Fig. 11. Il modello è calibrato, non 1993.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) p̂<sub>16</sub><sup>H</sup> piatta: cond(A), ‖ĉ‖<sub>2</sub>, residuo — solve o lstsq?
+    (2) perché I<sub>restr</sub> è asimmetrico se la docstring parla di [k<sub>1</sub>−h, k<sub>1</sub>+h]?
+    (3) se a N = 6 H = L, in che senso Fig. 11 mostra un confronto di basi?
+  </div>
+</article>
+
+<article class="fig" id="f12">
+  <h2>Figura 12 — Densità Heston L = 4, ĉ <span class="badge no">non replica il paper</span></h2>
+  <p class="meta">Gambaro Fig. 12 layout · solo Logistica · ĉ</p>
+  <img src="img/figure_12_density_heston.png" alt="Figura 12 Heston L=4 c-hat" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>L = 4, ĉ Logistica vs COS, <code>show_hermite=False</code>. Stesso titolo «Heston N = …» della copia Fourier. Asse ≈ [−1.5, 1.5] originale: è I largo.</dd>
+    <dt>Interpretazione</dt>
+    <dd>N = 6: il corpo «accettabile» nasconde il log a destra a ~ −250 (COS resta ~ −25, Fig. 4). L’esponente sbaglia la coda leggera di un ordine di grandezza. N = 16: log ≈ −700 = log(10<sup>−300</sup>), densità numericamente zero; la blu non copre tutto I (NaN). Gemello di Fig. 8 ĉ.</dd>
+    <dt>Hermite</dt>
+    <dd>Omessa. Fig. 11 a N = 16 Hermite è schiacciata, non NaN: su L = 4 servirebbe vederla. <code>show_hermite=False</code> è esattamente dove serve la curva.</dd>
+    <dt>Logistica</dt>
+    <dd>Il picco a N = 6 non è la tesi sulle code, e Heston è un problema di code. A N = 16 non c’è Logistica: c’è underflow/NaN.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>No. Gambaro Fig. 12 a N = 16 ha una densità visibile: è la copia <code>_c_fourier</code>, non questa. Lo split va nel testo della tesi, non in una nota del README.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) perché Hermite è spenta proprio sul caso in cui Fig. 11 mostra il cadavere?
+    (2) log = −700: Ĉ<sub>0</sub> = 0, exp(f) underflow, o entrambi?
+    (3) se Fig. 12 ĉ è morta e Fig. 12 Fourier «sembra il paper», quale delle due è l’esperimento di Gambaro?
+  </div>
+</article>
+
+<article class="fig" id="f12f">
+  <h2>Figura 12 Fourier — Heston L = 4, c eq. 9 <span class="badge mid">parziale</span></h2>
+  <p class="meta"><code>_c_fourier</code> · eq. 9 + C0, non eq. 15</p>
+  <img src="img/figure_12_density_heston_c_fourier.png" alt="Figura 12 Fourier" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Stesso layout, c<sub>j</sub> Fourier logistici, Hermite di nuovo omessa. I c<sub>j</sub> vivono su L = 4 con |clr| a destra ~ 25. Questa è la figura che <em>assomiglia</em> al paper, non la 12 senza suffisso.</dd>
+    <dt>Interpretazione</dt>
+    <dd>N = 6 non «già insegue» il COS: picco spostato, spalla sinistra sopra. N = 16: corpo buono; code del log con U-turn a entrambi i bordi. Ordine ~ −25 come Fig. 4, non −700: certifica che Fourier+C0 non underflowa, non il matching di momenti né |clr| &lt; 10.</dd>
+    <dt>Hermite</dt>
+    <dd>Assente. La proiezione Fourier-Hermite è l’oggetto teorico (eq. 7–9 con ω). Nasconderla rende tautologica la frase «questa è la curva da affiancare a Gambaro».</dd>
+    <dt>Logistica</dt>
+    <dd>Da affiancare a Gambaro Fig. 12 solo dichiarando Fourier, non ĉ. Se Gambaro è più pulito alle code, nemmeno questa copia è fedele; se ha gli stessi U-turn, il paper è in regime L = 4 illecito per |clr| &lt; 10.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Il match visivo è il problema: replica l’aspetto del paper con un estimatore diverso. Fig. 12 senza suffisso resta il vero output dello stimatore a momenti, ed è morta.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico Heston</strong>
+    Relatore: (1) se <code>_c_fourier</code> «è» Fig. 12 di Gambaro, lo stimatore della tesi (eq. 15) fallisce Heston L = 4: dove sta scritto?
+    (2) U-turn a x ≈ ±1.5: troncamento polinomiale o dominio troppo largo rispetto a Fig. 4?
+    (3) mostrare Hermite Fourier a N = 6 e 16: se il corpo è analogo, perché <code>show_hermite=False</code>?
+  </div>
+</article>
+
+<article class="fig" id="f13">
+  <h2>Figura 13 — Coefficienti CGMY <span class="badge ext">estensione</span></h2>
+  <p class="meta">Non in Gambaro · analogo Figs 1–3 · G=7, M=12, Y=0.6, κ<sub>2</sub>=0.04 · rigenerata senza lstsq</p>
+  <img src="img/figure_13_coeff_cgmy.png" alt="Figura 13 CGMY coeff" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>d<sub>2</sub>(ĉ<sup>(N)</sup>, c Fourier), non |ĉ| → 0. Blu primi 6, arancione tutti.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Con LU pura Hermite insegue c in modo monotono: 0.073 (N = 4) → 0.016 (N = 16), first-6 → 0.009. cond(A<sub>H</sub>) a N = 16 è 1.66×10<sup>15</sup>, ma la LU resta backward-stable (residuo ~10<sup>−8</sup>) e d<sub>2</sub> <em>continua a scendere</em>: il vecchio spike a N = 16 era interamente il fallback lstsq (ĉ → 0, residuo ≈ 0.99), non instabilità reale. Logistica: primi 6 stabili, “all” oscilla fino a ≈ 2 (coordinate Q, non densità — vedi Fig. 14).</dd>
+    <dt>Hermite</dt>
+    <dd>Il migliore dei quattro modelli su questa metrica insieme a NIG: nessuno spike residuo. L’effetto vero del condizionamento (mh<sub>30</sub> ≈ 1.7×10<sup>10</sup>, momenti dominati dalla massa fuori da [a,b]) comparirebbe solo oltre N ≈ 16, fuori dal grafico.</dd>
+    <dt>Logistica</dt>
+    <dd>Come per il NIG: coordinate alte lontane dai c<sup>L</sup> Fourier (zigzag fino a 2), densità comunque buona. cond(A<sub>L</sub>) ≤ 1.2×10<sup>10</sup> fino a N = 16.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Estensione. Ora il pannello Hermite ha la stessa forma qualitativa delle Figg. 1–2 (VG/NIG): decadimento monotono, scaletta pari/dispari. Il CGMY si colloca tra NIG e Heston per difficoltà.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico CGMY — aggiornamento</strong>
+    Le obiezioni (1)–(3) originali sono superate: lo spike era l’artefatto lstsq, ora rimosso.
+    Restano aperte: (1) documentare in tesi che cond(A<sub>H</sub>) = 1.7×10<sup>15</sup> a N = 16 e perché la LU è comunque affidabile (residuo, confronto con c Fourier);
+    (2) l’oscillazione “all” della Logistica merita la stessa spiegazione coordinate-vs-densità del NIG.
+  </div>
+</article>
+
+<article class="fig" id="f14">
+  <h2>Figura 14 — Distanze densità CGMY <span class="badge ext">estensione</span></h2>
+  <p class="meta">Analogo Figs 5–6 · ĉ</p>
+  <img src="img/figure_14_distances_cgmy.png" alt="Figura 14 CGMY distanze" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Aitchison, log-L<sup>2</sup>, L<sup>1</sup>, L<sup>2</sup> di p̂<sub>N</sub> vs COS, N = 2…16.</dd>
+    <dt>Interpretazione</dt>
+    <dd>Un solo fenomeno residuo: il picco a N = 6 su L<sup>1</sup> ≈ 1.35, L<sup>2</sup> ≈ 4.2 e log-L<sup>2</sup> ≈ 4.16, <em>identico</em> per le due basi (stesso polinomio): f(+5.88) = +4.90, p̂(b) ≈ 53, 67% della massa su x* &gt; 3. Aitchison resta ≈ 0.05 perché ν<sub>gauss</sub> a destra è ~10<sup>−8</sup>. Causa: |clr(b)| = 10.8 &gt; 10 — sul L = 4 il CGMY viola la condizione del paper (p. 13), come Heston. Da N = 7 in poi decadimento pulito fino a L<sup>1</sup> ≈ 0.012 a N = 16 <em>per entrambe le basi</em>: il vecchio crollo Hermite a N = 16 era il fallback lstsq, rimosso.</dd>
+    <dt>Hermite</dt>
+    <dd>Identica alla Logistica su (b)(c)(d) per ogni N = 2…16; su Aitchison sta sotto (ν gaussiana concentrata al centro). Nessun crollo.</dd>
+    <dt>Logistica</dt>
+    <dd>Stesso picco a N = 6 (stesso polinomio), stessa discesa dopo. Aitchison leggermente più alta: ν<sub>L</sub> vede di più le code.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Nessuna figura CGMY in Gambaro. Il picco N = 6 non c’è su VG/NIG: è l’asimmetria left-skew (pendenze −2.4/+1.4 in x*) su un dominio simmetrico, non un baco della CF. Il grado 6 Fourier <em>non</em> esplode (L<sup>1</sup> ≈ 0.023): è questo ĉ, non ogni troncamento a 6. La cura coerente col paper è il dominio ristretto → Fig. 16.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico CGMY — aggiornamento</strong>
+    Aitchison 0.054 vs log-L<sup>2</sup> 4.16 a N = 6: una nasconde la coda, l’altra no; cond(A<sub>H</sub>) a N = 6 è solo 5·10<sup>2</sup>, quindi il picco non è ill-conditioning — resta valido.
+    Superato invece il punto sul «trend Hermite»: con LU pura non esiste alcun crollo a N = 16.
+    Relatore: (1) quale metrica è «ottima» a N = 6? (2) perché il picco appare solo qui e non su VG/NIG (risposta: |clr(b)| &gt; 10, Fig. 4 quattro)?
+  </div>
+</article>
+
+<article class="fig" id="f15">
+  <h2>Figura 15 — PDF e log-PDF CGMY <span class="badge ext">estensione</span></h2>
+  <p class="meta">Analogo Figs 9–10 · ĉ</p>
+  <img src="img/figure_15_density_cgmy.png" alt="Figura 15 CGMY densità" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>p̂ vs COS a N = 6 e 16, lineare e log.</dd>
+    <dt>Interpretazione</dt>
+    <dd>N = 6: corpo sottostimato e schiacciato (Ĉ<sub>0</sub> paga il picco), poi entrambe le basi sparano a destra (p̂(b) ≈ 53; un solo esponente, max |f<sub>H</sub> − f<sub>L</sub>| ≈ 0.02). N = 16: Hermite <em>e</em> Logistica sovrapposte al COS su tutto il corpo (L<sup>1</sup> ≈ 0.0125) — la vecchia Hermite bimodale/schiacciata era il ĉ lstsq, rimosso. Nel log (d) la coda destra scende a ≈ −14 vs COS −10.6: sotto-stima di coda, non esplosione. Contribuiscono: peso ν ~ 10<sup>−8</sup> al bordo (fit non vincolato), |clr(b)| &gt; 10, e il fatto che lo stesso COS al bordo è appiattito (la serie di coseni ha derivata nulla in a e b: pendenza misurata −1.45 vs ≈ −2.6 teorica).</dd>
+    <dt>Hermite</dt>
+    <dd>N = 6 = Logistica (esplosione condivisa al bordo destro). N = 16: indistinguibile dalla Logistica e dal COS sul corpo.</dd>
+    <dt>Logistica</dt>
+    <dd>Identica a Hermite su entrambi gli N: stesso polinomio, code comprese.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Estensione. Lo U-turn di coda a N = 6 è lo stesso meccanismo della Fig. 9 VG, aggravato dall’asimmetria: la coda <em>leggera</em> (M = 12) va raggiunta a −10.6 su un dominio simmetrico. Sul dominio ristretto (Fig. 17) il difetto rientra.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico CGMY — aggiornamento</strong>
+    Resta valido: a N = 6 max |f<sub>H</sub> − f<sub>L</sub>| ≈ 0.02, non sono due stimatori distinti; e 67% di massa a x* &gt; 3 contro Aitchison 0.054 mostra quale metrica nasconde il difetto.
+    Superato: la Hermite piatta a N = 16 (era ‖ĉ‖ = 0.048 da lstsq; con LU ‖ĉ‖ = 0.78, residuo 10<sup>−8</sup>).
+    Relatore: (1) la sotto-stima di coda a N = 16 nel log (−14 vs −10.6) è del metodo o anche del benchmark COS appiattito al bordo?
+  </div>
+</article>
+
+<article class="fig" id="f16">
+  <h2>Figura 16 — Distanze CGMY, dominio ristretto <span class="badge ext">estensione</span></h2>
+  <p class="meta">Analogo di Fig. 7 (Heston) · criterio log p &gt; −10 · I<sub>restr</sub> = [−1.269, 0.988], x* ∈ [−5.88, 5.40] · ĉ, LU</p>
+  <img src="img/figure_16_distances_cgmy_restricted_domain.png" alt="Figura 16 CGMY distanze dominio ristretto" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>Le stesse quattro distanze della Fig. 14, ma su I<sub>restr</sub>: il dominio L = 4 tagliato dove log p<sub>COS</sub> ≤ −10 (stesso proxy di Heston Fig. 7). Il taglio è solo a destra, dove la coda leggera (M = 12) fa violare |clr| &lt; 10. Ĉ<sub>0</sub> è ricalcolato su I<sub>restr</sub>; i ĉ sono gli stessi della Fig. 14 (il sistema non dipende dal dominio).</dd>
+    <dt>Interpretazione</dt>
+    <dd>Il picco a N = 6 <em>scompare</em>: L<sup>1</sup> passa da 1.345 (pieno) a 0.047 (ristretto) a parità di coefficienti. Non perché il polinomio migliori, ma perché la risalita di f (minimo di log p̂ a x* = 4.15, poi in su) resta quasi tutta oltre il taglio a 5.40, e Ĉ<sub>0</sub> non paga più il picco. Tutte e quattro le metriche decadono in modo quasi monotono: L<sup>1</sup> 0.14 (N = 2) → 0.012 (N = 16), con la sola gobba residua a N = 5–6.</dd>
+    <dt>Hermite</dt>
+    <dd>Uguale alla Logistica su (b)(c)(d); su Aitchison sta sotto per la solita ν. Nessun crollo a N = 16 (LU, residuo ~10<sup>−8</sup>).</dd>
+    <dt>Logistica</dt>
+    <dd>Identica sulla densità. Aitchison parte più alta (0.23 a N = 2) e converge a ≈ 0.03.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>È l’applicazione al CGMY della prescrizione di Gambaro (p. 13): se |clr| &gt; 10 su parte di I, si restringe il dominio — esattamente il trattamento riservato a Heston (Fig. 7). Il proxy log p &gt; −10 differisce dal criterio esatto clr &gt; −10 solo per lo shift E<sub>ν</sub>[log p] = 0.17: taglio a x* = 5.40 invece di 5.32, ~1.5% dell’ampiezza. Coerente a meno di questa approssimazione, documentata in <code>clr_domain</code>.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico CGMY — nuova figura</strong>
+    Come per Fig. 7 Heston: Ĉ<sub>0</sub> è su I<sub>restr</sub> ma il COS resta espanso su I<sub>full</sub> — si confronta una densità (massa 1 su I<sub>restr</sub>) con una sotto-probabilità.
+    Relatore: (1) stampare [a, b] ristretto in figura; (2) quanta massa COS resta fuori dal taglio (trascurabile, ma va detto); (3) il picco N = 6 «sparisce» per troncamento del dominio, non per correzione del polinomio: va scritto così anche in tesi.
+  </div>
+</article>
+
+<article class="fig" id="f17">
+  <h2>Figura 17 — Densità CGMY, dominio ristretto <span class="badge ext">estensione</span></h2>
+  <p class="meta">Analogo di Fig. 11 (Heston) · N = 6 e 16 · ĉ, LU · entrambe le basi</p>
+  <img src="img/figure_17_density_cgmy_restricted.png" alt="Figura 17 CGMY densità dominio ristretto" />
+  <dl>
+    <dt>Che cosa rappresenta</dt>
+    <dd>PDF e log-PDF su I<sub>restr</sub> a N = 6 e 16, stessi ĉ della Fig. 15, Ĉ<sub>0</sub> ricalcolato sul dominio tagliato.</dd>
+    <dt>Interpretazione</dt>
+    <dd>N = 6 (a): il corpo ora si vede — picco p̂ ≈ 2.19 vs COS 2.29, con un residuo di risalita al bordo destro (p̂(b<sub>r</sub>) ≈ 0.28: il taglio a 5.40 non è oltre il minimo di f a 4.15, un tratto di risalita entra ancora). Confrontare con la Fig. 15(a) dove il corpo era invisibile sotto il picco a 53. N = 16 (b): sovrapposizione completa. Nei log (c)(d): sinistra leggermente sovrastimata a N = 6, destra con U-turn contenuto a ≈ −1.3 (c) e sotto-stima a ≈ −12 (d).</dd>
+    <dt>Hermite</dt>
+    <dd>Presente e indistinguibile dalla Logistica a entrambi gli N: sul CGMY, a differenza di Heston Fig. 11, non c’è alcun «cadavere» Hermite.</dd>
+    <dt>Logistica</dt>
+    <dd>Identica (stesso polinomio). Il confronto di basi qui non discrimina nulla: è un test del dominio, non della base.</dd>
+    <dt>Coerenza col paper</dt>
+    <dd>Replica il protocollo Heston Fig. 11 sul modello esteso. Con dominio conforme a |clr| &lt; 10 l’espansione a momenti funziona anche a N = 6: conferma che il problema della Fig. 15 era il dominio, non la CF CGMY né la base.</dd>
+  </dl>
+  <div class="contest">
+    <strong>Critico CGMY — nuova figura</strong>
+    Relatore: (1) la risalita residua a destra a N = 6 (p̂(b<sub>r</sub>) = 0.28 vs COS ≈ 5×10<sup>−5</sup>) va commentata: il taglio proxy non elimina il difetto del polinomio, lo maschera meno del pieno;
+    (2) taglio esatto |clr| &lt; 10 (x* = 5.32) vs proxy (5.40): quanto cambierebbe p̂(b<sub>r</sub>)?
+    (3) a N = 16 la coda destra sotto-stimata resta: dominio ristretto ≠ code corrette.
+  </div>
+</article>
+
+</main>
+<footer>
+  Replica numerica di Gambaro, A.M. (2024), <em>Exponential expansions for approximation of probability distributions</em>.
+  CGMY: Carr et al. (2002). Per servire in locale:
+  <code>cd docs/guida-figure && python3 -m http.server 8000</code>
+  poi apri <code>http://127.0.0.1:8000</code>.
+  Oppure apri questo <code>index.html</code> direttamente nel browser.
+</footer>
+</body>
+</html>
