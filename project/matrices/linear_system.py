@@ -127,36 +127,26 @@ def build_b(N: int, mh: np.ndarray) -> np.ndarray:
     return b
 
 
-def solve_system(A: np.ndarray, b: np.ndarray,
-                 cond_threshold: float = None) -> Tuple[np.ndarray, float]:
+def solve_system(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, float]:
     """
-    Solve A @ c = b via decomposizione LU (come nel paper: Gambaro risolve
-    il sistema eq. 15 direttamente, senza regolarizzazione).
+    Solve A @ c = b via decomposizione LU (Gambaro risolve l'eq. 15
+    direttamente, senza regolarizzazione).
 
-    cond_threshold : se non None e cond(A) > soglia, usa np.linalg.lstsq
-        al posto della LU. Di default e' None (LU pura) per VG/NIG/CGMY:
-        per quei modelli il fallback era fuorviante — lstsq con rcond
-        automatico scarta i valori singolari piccoli e restituisce la
-        soluzione a norma minima del sistema TRONCATO, che non risolve
-        eq. 15 (per CGMY a N=16: residuo ||A c - b|| ≈ 0.99 ≈ ||b||,
-        falsa "esplosione" nelle figure), mentre la LU e' backward-stable
-        (residuo ~1e-8, d2 = 0.016).
-        Per HESTON invece main.py passa cond_threshold=1e14: con la LU
-        pura a N=13-14 la densita' e' comunque rotta (L1 = 2 o overflow,
-        momenti mpmath rumorosi + cond ~ 1e16-1e19) e le coordinate
-        logistiche esplodono (d2 ~ 1e3); il fallback lstsq mantiene le
-        curve limitate e riproduce le Figure 3/7/8/11/12 committate.
+    Un fallback np.linalg.lstsq per cond(A) > 1e14 e' stato rimosso per
+    tutti i modelli, Heston incluso: lstsq restituisce la soluzione a
+    norma minima del sistema TRONCATO, che non risolve l'eq. 15
+    (residuo ≈ ||b||, ĉ → 0). Su Heston questo schiacciava Hermite a
+    N=16 (Fig. 11 piatta, pmax ≈ 0.56 vs COS 2.07) e faceva "esplodere"
+    le distanze in Fig. 7. Con LU, sullo stesso dominio ristretto,
+    L1(Hermite, N=16) = 0.006 e pmax = 2.08.
 
-    Returns (c_hat, cond_number). cond e' restituito a scopo diagnostico.
+    Returns (c_hat, cond_number). cond e' solo diagnostico.
     """
     import warnings
-    cond = np.linalg.cond(A) #numero di condizionamento
-    if cond_threshold is not None and cond > cond_threshold:
-        c_hat, _, _, _ = np.linalg.lstsq(A, b, rcond=None) #soluzione a norma minima (solo Heston)
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            c_hat = solve(A, b) #decomposizione LU: c_hat = A^-1 @ b
+    cond = np.linalg.cond(A)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        c_hat = solve(A, b)
     return c_hat, cond
 
 

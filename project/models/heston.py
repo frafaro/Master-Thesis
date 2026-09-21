@@ -35,6 +35,12 @@ def characteristic_function(u: np.ndarray, params: Dict) -> np.ndarray:
     cf. Gatheral (2006) "The Volatility Surface".
 
     Log-return X = log(S_T/S_0) under risk-neutral measure.
+
+    Come VG (media 0), lavoriamo con la variabile CENTRATA
+        Y = X - E[X]
+    quindi phi_Y(u) = e^{-i u m1} phi_X(u). Skew e kurtosi non cambiano;
+    l'espansione di Gambaro e' comunque in x* = Y/sigma. Lo shift rende
+    m1=0 nei momenti grezzi (niente binomio di Newton per centrare).
     """
     kappa = params["kappa"]
     theta = params["theta"]
@@ -65,10 +71,31 @@ def characteristic_function(u: np.ndarray, params: Dict) -> np.ndarray:
          ))
     B = (alpha - d) / xi**2 * (1.0 - exp_dT) / denom
 
-    return np.exp(A + B * v0)
+    phi = np.exp(A + B * v0)
+    # Centra: Y = X - m1. m1 e' in cache (calcolato da cumulants_numerical).
+    m1 = params.get("_mean")
+    if m1 is None:
+        m1 = _cached_mean(params)
+    return phi * np.exp(-1j * u * m1)
 
 
-def cumulants_numerical(params: Dict, max_order: int = 30) -> np.ndarray:
+_MEAN_CACHE = {}
+
+
+def _params_key(params: Dict):
+    return tuple(sorted((k, float(v)) for k, v in params.items()
+                        if k != "_mean" and np.isscalar(v)))
+
+
+def _cached_mean(params: Dict) -> float:
+    key = _params_key(params)
+    if key not in _MEAN_CACHE:
+        _MEAN_CACHE[key] = float(cumulants_numerical(params, max_order=2, _center=False)[1])
+    return _MEAN_CACHE[key]
+
+
+def cumulants_numerical(params: Dict, max_order: int = 30,
+                        _center: bool = True) -> np.ndarray:
     """
     Compute cumulants of X = log(S_T/S_0) via numerical differentiation
     of the log-MGF  K(s) = log phi(-i*s)  at s=0.
@@ -126,6 +153,11 @@ def cumulants_numerical(params: Dict, max_order: int = 30) -> np.ndarray:
         except Exception as e:
             # For very high orders, fall back to 0
             kappas[k] = 0.0
+    # Cache the uncentered mean, then (default) work with Y = X - E[X]
+    # like VG (m1=0). Cumulants of order >= 2 are invariant under shift.
+    _MEAN_CACHE[_params_key(params)] = float(kappas[1])
+    if _center:
+        kappas[1] = 0.0
     return kappas
 
 

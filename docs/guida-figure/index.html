@@ -138,10 +138,8 @@
     <a href="#f12">12 ĉ</a>
     <a href="#f12f">12 Fourier</a>
     <a href="#f13">13 CGMY</a>
-    <a href="#f14">14 CGMY</a>
-    <a href="#f15">15 CGMY</a>
-    <a href="#f16">16 CGMY ristr.</a>
-    <a href="#f17">17 CGMY ristr.</a>
+    <a href="#f14">14 CGMY ristr.</a>
+    <a href="#f15">15 CGMY ristr.</a>
   </div>
 </nav>
 <main>
@@ -207,26 +205,20 @@
 
 <article class="fig" id="f3">
   <h2>Figura 3 — Coefficienti Heston <span class="badge mid">parziale</span></h2>
-  <p class="meta">Gambaro Fig. 3 · <code>figure_03_coeff_heston.pdf</code> · skew −1.2, exkurt 2.5</p>
+  <p class="meta">Gambaro Fig. 3 · Y = X − E[X] (media 0, come VG) · LU, niente lstsq · skew −1.2, exkurt 2.5</p>
   <img src="img/figure_03_coeff_heston.png" alt="Figura 3: d2 coefficienti Heston" />
   <dl>
     <dt>Che cosa rappresenta</dt>
-    <dd>d<sub>2</sub>(ĉ<sup>(N)</sup>, c) senza coda di troncamento, N = 4…16. Non è |ĉ|, non è cond(A), non è la densità. Scale y incommensurabili (Hermite ~ 1.2, Logistica ~ 100) e ylabel diversi. I c<sub>j</sub> Fourier sono CLR di p<sub>COS</sub> su L = 4 dove |clr| ~ 25 a destra: il bersaglio è già fuori da |clr| &lt; 10. Non è Heston (1993): parametri calibrati a skew −1.2 e exkurt 2.5, CF Gatheral, cumulanti mpmath.</dd>
+    <dd>d<sub>2</sub>(ĉ<sup>(N)</sup>, c Fourier) in coordinate della base, N = 4…16. Le due scale y non si confrontano: c<sup>H</sup> ≠ c<sup>L</sup>.</dd>
     <dt>Interpretazione</dt>
-    <dd>Cinque parametri per due momenti: la legge non è identificata. A N = 14 Logistica d<sub>2</sub> ~ 100 implica ‖ĉ − c‖ ~ 100, quindi ĉ <em>è</em> esploso. Il grafico mescola momenti numerici, cond(A) e lstsq. Per N ≤ 6 blu ≡ arancione per costruzione.</dd>
+    <dd>I momenti <em>erano già</em> standardizzati (mh<sub>1</sub> = mh<sub>2</sub> = 0 a 10<sup>−16</sup>; il binomio (X−m<sub>1</sub>)<sup>k</sup>/σ<sup>k</sup> coincide con κ<sub>n</sub>/σ<sup>n</sup> a precisione macchina). Centrare Y = X − E[X] come VG non cambia ĉ. Il ~100 (ora ~1000 a N = 16) della Logistica <em>non</em> è un manco di centratura: è ‖ĉ<sup>L</sup> − c<sup>L</sup>‖ nelle coordinate Q. Lo stesso polinomio, in coordinate di Hermite, ha d<sub>2</sub> ≲ 0.9 — l’ordine di grandezza del 0.6 di Gambaro. Q mappa un polinomio moderato in coefficienti logistici enormi quando cond(A<sub>L</sub>) ~ 10<sup>13</sup>–10<sup>15</sup>. La densità (Fig. 7, 11) resta buona: è lo stesso esponente.</dd>
     <dt>Hermite</dt>
-    <dd>Oscilla (minimo ~ N = 9, tuffo a N = 13, spike a N = 16 ≈ 1.2). Blu e arancione sovrapposti dopo N = 6 dicono che l’errore non è solo nei gradi alti. Il tuffo a 13 <em>non</em> è il lstsq CGMY (quello schiaccia ĉ → 0). Da questa figura sola non si distingue LU instabile vs minimi quadrati.</dd>
+    <dd>Oscilla, massimo ≈ 0.88 a N = 12, a N = 16 ≈ 0.88. Coerente in scala col paper (~0.6).</dd>
     <dt>Logistica</dt>
-    <dd>«Piccolo fino a N ≈ 8» è relativo a una scala da 100: a N = 8 si è già fuori dalla scala Hermite. A N = 14 first-6 ~ 55 e all ~ 100: l’errore non è tutto nei gradi alti. Poi la curva <em>scende</em> a N = 16: non è monotonia di instabilità.</dd>
+    <dd>Stabile fino a N ≈ 12 (d<sub>2</sub> ≲ 40), poi LU esplode in coordinate (1000 a N = 16). Non è lstsq (rimosso): è il sistema mal condizionato espresso in base Q.</dd>
     <dt>Coerenza col paper</dt>
-    <dd>Parziale. Catturare «l’instabilità» non è replicare Fig. 3. Senza overlay sul PDF di Gambaro il picco a 100 è inverificabile.</dd>
+    <dd>Pannello Hermite sì, per ordine di grandezza. Pannello Logistica no: Gambaro resta sotto 1, qui le coordinate Q divergono. Va dichiarato che d<sub>2</sub> in coordinate logistiche non è la distanza sulla densità.</dd>
   </dl>
-  <div class="contest">
-    <strong>Critico Heston</strong>
-    Relatore: (1) perché Fig. 3 omette cond(A<sub>N</sub>), residuo e ‖ĉ‖<sub>2</sub>?
-    (2) i cumulanti di ordine ≥ 20 via mpmath.diff: quanto è rumore di differenziazione in Ã?
-    (3) in che senso è «Heston» se non sono i parametri 1993 e (skew, curtosi) non fissano i momenti alti?
-  </div>
 </article>
 
 <article class="fig" id="f4">
@@ -325,27 +317,21 @@
 </article>
 
 <article class="fig" id="f7">
-  <h2>Figura 7 — Distanze Heston, dominio ristretto <span class="badge mid">parziale</span></h2>
-  <p class="meta">Gambaro Fig. 7 · euristica log p &gt; −10, non |clr| &lt; 10 · ĉ</p>
+  <h2>Figura 7 — Distanze Heston, dominio ristretto <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 7 · log p &gt; −10 · LU (lstsq rimosso) · Y centrata</p>
   <img src="img/figure_07_distances_heston_restricted_domain.png" alt="Figura 7 Heston ristretto" />
   <dl>
     <dt>Che cosa rappresenta</dt>
-    <dd>Quattro distanze su I<sub>restr</sub> scelto dove log p<sub>COS</sub> &gt; −10 (2000 punti, primo/ultimo indice). Non ricalcola la CLR, non simmetrizza. Ĉ<sub>0</sub> su I<sub>restr</sub>; COS resta espanso su I<sub>full</sub>: si confronta una probabilità (massa 1) con una sotto-probabilità. L<sup>1</sup>/L<sup>2</sup> non sono invarianti. [a, b] non è stampato. Non confrontare 1-a-1 con Fig. 8.</dd>
+    <dd>Quattro distanze su I<sub>restr</sub> = [−1.541, 0.713]. Ĉ<sub>0</sub> su I<sub>restr</sub>; COS valutato dal L=4.</dd>
     <dt>Interpretazione</dt>
-    <dd>Il taglio è quasi solo a destra (coda leggera); a sinistra I<sub>restr</sub> ≈ I<sub>L=4</sub>. «Fino a N ≈ 13 coincidono e scendono» è falso: Aitchison Hermite sta sotto (ν diversa); minimo a N = 4, gobba a N = 6; log-L<sup>2</sup> è un plateau N = 4…8.</dd>
+    <dd>Hermite e Logistica coincidono su L<sup>1</sup>/L<sup>2</sup>/log (stesso polinomio). L<sup>1</sup> scende dopo il picco a N = 3; a N = 16 L<sup>1</sup> ≈ 0.006. Il vecchio crollo a N = 14–16 era lstsq (ĉ → 0), non la base di Hermite.</dd>
     <dt>Hermite</dt>
-    <dd>Crollo a N = 14–16. Fig. 11 a N = 16 è densità <em>piatta</em> (max ≈ 0.55) ⇒ più lstsq che esplosione LU. Soglia 10<sup>14</sup> non è nel paper. A N = 6 H = L al più su L<sup>1</sup>/L<sup>2</sup>/log, non su Aitchison.</dd>
+    <dd>Non esplode. Aitchison leggermente sotto la Logistica (ν gaussiana). Decadimento fino a 16, come nel paper.</dd>
     <dt>Logistica</dt>
-    <dd>Picco L<sup>1</sup> ≈ 0.67, L<sup>2</sup> ≈ 1.2 a N = 3. Aitchison a N = 2 già ≈ 0.6; a N = 16 risale un poco. Sopravvivere su un I diverso da Fig. 8 non è superiorità della base sul modello Heston.</dd>
+    <dd>Identica sulla densità. Picco L<sup>1</sup> a N = 3 (esponente di grado basso sul left-skew).</dd>
     <dt>Coerenza col paper</dt>
-    <dd>Il paper usa un dominio ristretto; questa euristica + C0 su I<sub>restr</sub> e COS su I<sub>full</sub> non è dichiarato essere l’esperimento di Gambaro. Convergenza fino a 13 e cadavere Hermite ≠ Fig. 7 del paper.</dd>
+    <dd>Sì sul messaggio: sul dominio con |clr| ≲ 10 entrambe le basi convergono. L=4 resta Fig. 8, dove Hermite è omessa perché |clr| ~ 25.</dd>
   </dl>
-  <div class="contest">
-    <strong>Critico Heston</strong>
-    Relatore: (1) qual è [a, b] numerico di Fig. 7, e perché non è in figura?
-    (2) L<sup>1</sup> tra p̂ (massa 1) e p<sub>COS</sub> (massa &lt; 1) cosa misura?
-    (3) cond(A), ‖ĉ‖<sub>2</sub> e residuo a N = 14, 16 prima di dire lstsq o «Hermite non ama Heston».
-  </div>
 </article>
 
 <article class="fig" id="f8">
@@ -441,27 +427,21 @@
 </article>
 
 <article class="fig" id="f11">
-  <h2>Figura 11 — Densità Heston, dominio ristretto <span class="badge mid">parziale</span></h2>
-  <p class="meta">Gambaro Fig. 11 · ĉ</p>
+  <h2>Figura 11 — Densità Heston, dominio ristretto <span class="badge ok">coerente</span></h2>
+  <p class="meta">Gambaro Fig. 11 · ĉ, LU · N = 6 e 16</p>
   <img src="img/figure_11_density_heston_restricted.png" alt="Figura 11 Heston ristretto" />
   <dl>
     <dt>Che cosa rappresenta</dt>
-    <dd>PDF/log su I<sub>restr</sub> a N = 6 e 16, ĉ, entrambe le basi vs COS. Stessi vizi di Fig. 7: euristica log p &gt; −10, C0 su I<sub>restr</sub>, COS su I<sub>full</sub>. Asse x originale ≈ [−1.55, 0.7], non x*: a sinistra quasi L = 4, a destra tagliato.</dd>
+    <dd>PDF/log su I<sub>restr</sub> ≈ [−1.54, 0.71] (Y centrata). Entrambe le basi vs COS.</dd>
     <dt>Interpretazione</dt>
-    <dd>N = 6: corpo coincide; a destra il log va a ~ −15 vs COS ~ −10, non «scende un po’». N = 16: Logistica sul corpo, con risalita al bordo destro; Hermite schiacciata (picco ~ 0.55). Quella forma è ĉ distrutto, non «Heston».</dd>
+    <dd>N = 6: corpo sul COS, code del log un po’ sottili a destra. N = 16: Hermite e Logistica indistinguibili dal COS (pmax ≈ 2.08 vs 2.07). La vecchia curva piatta era lstsq: ‖ĉ‖ = 0.004, f quasi costante, Ĉ<sub>0</sub> produceva una densità uniforme di altezza 0.56. Con LU, ‖ĉ‖ ≈ 1.53 e L<sup>1</sup> = 0.006.</dd>
     <dt>Hermite</dt>
-    <dd>A N = 6 è lo stesso polinomio della Logistica, non un successo della base gaussiana. A N = 16 inutile (max 0.55 vs COS ~ 2.05). Qui Hermite <em>non</em> è omessa: si vede il cadavere che Fig. 12 nasconde.</dd>
+    <dd>A N = 16 non è più un cadavere: sovrapposta al COS. Stesso polinomio della Logistica.</dd>
     <dt>Logistica</dt>
-    <dd>Corpo buono sul ristretto, con C0 ricalcolato. Trasferire questo a Fig. 8/12 L = 4 è illecito. «Sembra Gambaro» senza overlay è estetica.</dd>
+    <dd>Identica. Il confronto di basi qui non discrimina.</dd>
     <dt>Coerenza col paper</dt>
-    <dd>N = 16 Hermite morto non è nel paper. Scaricare su lstsq/cond(A) è obbligatorio, ma allora non è una replica di Fig. 11. Il modello è calibrato, non 1993.</dd>
+    <dd>Sì: sul dominio ristretto l’espansione a momenti a N = 16 riproduce Heston, come Gambaro Fig. 11.</dd>
   </dl>
-  <div class="contest">
-    <strong>Critico Heston</strong>
-    Relatore: (1) p̂<sub>16</sub><sup>H</sup> piatta: cond(A), ‖ĉ‖<sub>2</sub>, residuo — solve o lstsq?
-    (2) perché I<sub>restr</sub> è asimmetrico se la docstring parla di [k<sub>1</sub>−h, k<sub>1</sub>+h]?
-    (3) se a N = 6 H = L, in che senso Fig. 11 mostra un confronto di basi?
-  </div>
 </article>
 
 <article class="fig" id="f12">
@@ -537,98 +517,35 @@
 </article>
 
 <article class="fig" id="f14">
-  <h2>Figura 14 — Distanze densità CGMY <span class="badge ext">estensione</span></h2>
-  <p class="meta">Analogo Figs 5–6 · ĉ</p>
-  <img src="img/figure_14_distances_cgmy.png" alt="Figura 14 CGMY distanze" />
+  <h2>Figura 14 — Distanze CGMY, dominio ristretto <span class="badge ext">estensione</span></h2>
+  <p class="meta">Analogo Fig. 7 · I<sub>restr</sub> = [−1.269, 0.988] · ex Fig. 16</p>
+  <img src="img/figure_14_distances_cgmy_restricted_domain.png" alt="Figura 14 CGMY distanze ristretto" />
   <dl>
     <dt>Che cosa rappresenta</dt>
-    <dd>Aitchison, log-L<sup>2</sup>, L<sup>1</sup>, L<sup>2</sup> di p̂<sub>N</sub> vs COS, N = 2…16.</dd>
+    <dd>Le quattro distanze sul dominio tagliato dove log p &gt; −10 (criterio Gambaro p. 13: |clr| &lt; 10). Il L=4 pieno non viene più plottato: lì |clr(b)| = 10.8 e a N = 6 p̂(b) ≈ 53.</dd>
     <dt>Interpretazione</dt>
-    <dd>Un solo fenomeno residuo: il picco a N = 6 su L<sup>1</sup> ≈ 1.35, L<sup>2</sup> ≈ 4.2 e log-L<sup>2</sup> ≈ 4.16, <em>identico</em> per le due basi (stesso polinomio): f(+5.88) = +4.90, p̂(b) ≈ 53, 67% della massa su x* &gt; 3. Aitchison resta ≈ 0.05 perché ν<sub>gauss</sub> a destra è ~10<sup>−8</sup>. Causa: |clr(b)| = 10.8 &gt; 10 — sul L = 4 il CGMY viola la condizione del paper (p. 13), come Heston. Da N = 7 in poi decadimento pulito fino a L<sup>1</sup> ≈ 0.012 a N = 16 <em>per entrambe le basi</em>: il vecchio crollo Hermite a N = 16 era il fallback lstsq, rimosso.</dd>
-    <dt>Hermite</dt>
-    <dd>Identica alla Logistica su (b)(c)(d) per ogni N = 2…16; su Aitchison sta sotto (ν gaussiana concentrata al centro). Nessun crollo.</dd>
-    <dt>Logistica</dt>
-    <dd>Stesso picco a N = 6 (stesso polinomio), stessa discesa dopo. Aitchison leggermente più alta: ν<sub>L</sub> vede di più le code.</dd>
+    <dd>Decadimento quasi monotono. L<sup>1</sup> 0.14 → 0.012. Gobba residua a N = 5–6. Hermite = Logistica su (b)(c)(d).</dd>
+    <dt>Hermite / Logistica</dt>
+    <dd>Stesso polinomio. Aitchison Hermite più bassa (ν al centro).</dd>
     <dt>Coerenza col paper</dt>
-    <dd>Nessuna figura CGMY in Gambaro. Il picco N = 6 non c’è su VG/NIG: è l’asimmetria left-skew (pendenze −2.4/+1.4 in x*) su un dominio simmetrico, non un baco della CF. Il grado 6 Fourier <em>non</em> esplode (L<sup>1</sup> ≈ 0.023): è questo ĉ, non ogni troncamento a 6. La cura coerente col paper è il dominio ristretto → Fig. 16.</dd>
+    <dd>Estensione. Stesso protocollo del dominio ristretto Heston.</dd>
   </dl>
-  <div class="contest">
-    <strong>Critico CGMY — aggiornamento</strong>
-    Aitchison 0.054 vs log-L<sup>2</sup> 4.16 a N = 6: una nasconde la coda, l’altra no; cond(A<sub>H</sub>) a N = 6 è solo 5·10<sup>2</sup>, quindi il picco non è ill-conditioning — resta valido.
-    Superato invece il punto sul «trend Hermite»: con LU pura non esiste alcun crollo a N = 16.
-    Relatore: (1) quale metrica è «ottima» a N = 6? (2) perché il picco appare solo qui e non su VG/NIG (risposta: |clr(b)| &gt; 10, Fig. 4 quattro)?
-  </div>
 </article>
 
 <article class="fig" id="f15">
-  <h2>Figura 15 — PDF e log-PDF CGMY <span class="badge ext">estensione</span></h2>
-  <p class="meta">Analogo Figs 9–10 · ĉ</p>
-  <img src="img/figure_15_density_cgmy.png" alt="Figura 15 CGMY densità" />
+  <h2>Figura 15 — Densità CGMY, dominio ristretto <span class="badge ext">estensione</span></h2>
+  <p class="meta">Analogo Fig. 11 · N = 6 e 16 · ex Fig. 17</p>
+  <img src="img/figure_15_density_cgmy_restricted.png" alt="Figura 15 CGMY densità ristretto" />
   <dl>
     <dt>Che cosa rappresenta</dt>
-    <dd>p̂ vs COS a N = 6 e 16, lineare e log.</dd>
+    <dd>PDF e log-PDF su I<sub>restr</sub>.</dd>
     <dt>Interpretazione</dt>
-    <dd>N = 6: corpo sottostimato e schiacciato (Ĉ<sub>0</sub> paga il picco), poi entrambe le basi sparano a destra (p̂(b) ≈ 53; un solo esponente, max |f<sub>H</sub> − f<sub>L</sub>| ≈ 0.02). N = 16: Hermite <em>e</em> Logistica sovrapposte al COS su tutto il corpo (L<sup>1</sup> ≈ 0.0125) — la vecchia Hermite bimodale/schiacciata era il ĉ lstsq, rimosso. Nel log (d) la coda destra scende a ≈ −14 vs COS −10.6: sotto-stima di coda, non esplosione. Contribuiscono: peso ν ~ 10<sup>−8</sup> al bordo (fit non vincolato), |clr(b)| &gt; 10, e il fatto che lo stesso COS al bordo è appiattito (la serie di coseni ha derivata nulla in a e b: pendenza misurata −1.45 vs ≈ −2.6 teorica).</dd>
-    <dt>Hermite</dt>
-    <dd>N = 6 = Logistica (esplosione condivisa al bordo destro). N = 16: indistinguibile dalla Logistica e dal COS sul corpo.</dd>
-    <dt>Logistica</dt>
-    <dd>Identica a Hermite su entrambi gli N: stesso polinomio, code comprese.</dd>
+    <dd>N = 6: corpo visibile (picco ≈ 2.19 vs COS 2.29), residuo di risalita all’estremo destro. N = 16: sovrapposizione. Il dominio pieno (vecchia Fig. 15) è stato tolto.</dd>
+    <dt>Hermite / Logistica</dt>
+    <dd>Indistinguibili.</dd>
     <dt>Coerenza col paper</dt>
-    <dd>Estensione. Lo U-turn di coda a N = 6 è lo stesso meccanismo della Fig. 9 VG, aggravato dall’asimmetria: la coda <em>leggera</em> (M = 12) va raggiunta a −10.6 su un dominio simmetrico. Sul dominio ristretto (Fig. 17) il difetto rientra.</dd>
+    <dd>Estensione con il criterio |clr| &lt; 10.</dd>
   </dl>
-  <div class="contest">
-    <strong>Critico CGMY — aggiornamento</strong>
-    Resta valido: a N = 6 max |f<sub>H</sub> − f<sub>L</sub>| ≈ 0.02, non sono due stimatori distinti; e 67% di massa a x* &gt; 3 contro Aitchison 0.054 mostra quale metrica nasconde il difetto.
-    Superato: la Hermite piatta a N = 16 (era ‖ĉ‖ = 0.048 da lstsq; con LU ‖ĉ‖ = 0.78, residuo 10<sup>−8</sup>).
-    Relatore: (1) la sotto-stima di coda a N = 16 nel log (−14 vs −10.6) è del metodo o anche del benchmark COS appiattito al bordo?
-  </div>
-</article>
-
-<article class="fig" id="f16">
-  <h2>Figura 16 — Distanze CGMY, dominio ristretto <span class="badge ext">estensione</span></h2>
-  <p class="meta">Analogo di Fig. 7 (Heston) · criterio log p &gt; −10 · I<sub>restr</sub> = [−1.269, 0.988], x* ∈ [−5.88, 5.40] · ĉ, LU</p>
-  <img src="img/figure_16_distances_cgmy_restricted_domain.png" alt="Figura 16 CGMY distanze dominio ristretto" />
-  <dl>
-    <dt>Che cosa rappresenta</dt>
-    <dd>Le stesse quattro distanze della Fig. 14, ma su I<sub>restr</sub>: il dominio L = 4 tagliato dove log p<sub>COS</sub> ≤ −10 (stesso proxy di Heston Fig. 7). Il taglio è solo a destra, dove la coda leggera (M = 12) fa violare |clr| &lt; 10. Ĉ<sub>0</sub> è ricalcolato su I<sub>restr</sub>; i ĉ sono gli stessi della Fig. 14 (il sistema non dipende dal dominio).</dd>
-    <dt>Interpretazione</dt>
-    <dd>Il picco a N = 6 <em>scompare</em>: L<sup>1</sup> passa da 1.345 (pieno) a 0.047 (ristretto) a parità di coefficienti. Non perché il polinomio migliori, ma perché la risalita di f (minimo di log p̂ a x* = 4.15, poi in su) resta quasi tutta oltre il taglio a 5.40, e Ĉ<sub>0</sub> non paga più il picco. Tutte e quattro le metriche decadono in modo quasi monotono: L<sup>1</sup> 0.14 (N = 2) → 0.012 (N = 16), con la sola gobba residua a N = 5–6.</dd>
-    <dt>Hermite</dt>
-    <dd>Uguale alla Logistica su (b)(c)(d); su Aitchison sta sotto per la solita ν. Nessun crollo a N = 16 (LU, residuo ~10<sup>−8</sup>).</dd>
-    <dt>Logistica</dt>
-    <dd>Identica sulla densità. Aitchison parte più alta (0.23 a N = 2) e converge a ≈ 0.03.</dd>
-    <dt>Coerenza col paper</dt>
-    <dd>È l’applicazione al CGMY della prescrizione di Gambaro (p. 13): se |clr| &gt; 10 su parte di I, si restringe il dominio — esattamente il trattamento riservato a Heston (Fig. 7). Il proxy log p &gt; −10 differisce dal criterio esatto clr &gt; −10 solo per lo shift E<sub>ν</sub>[log p] = 0.17: taglio a x* = 5.40 invece di 5.32, ~1.5% dell’ampiezza. Coerente a meno di questa approssimazione, documentata in <code>clr_domain</code>.</dd>
-  </dl>
-  <div class="contest">
-    <strong>Critico CGMY — nuova figura</strong>
-    Come per Fig. 7 Heston: Ĉ<sub>0</sub> è su I<sub>restr</sub> ma il COS resta espanso su I<sub>full</sub> — si confronta una densità (massa 1 su I<sub>restr</sub>) con una sotto-probabilità.
-    Relatore: (1) stampare [a, b] ristretto in figura; (2) quanta massa COS resta fuori dal taglio (trascurabile, ma va detto); (3) il picco N = 6 «sparisce» per troncamento del dominio, non per correzione del polinomio: va scritto così anche in tesi.
-  </div>
-</article>
-
-<article class="fig" id="f17">
-  <h2>Figura 17 — Densità CGMY, dominio ristretto <span class="badge ext">estensione</span></h2>
-  <p class="meta">Analogo di Fig. 11 (Heston) · N = 6 e 16 · ĉ, LU · entrambe le basi</p>
-  <img src="img/figure_17_density_cgmy_restricted.png" alt="Figura 17 CGMY densità dominio ristretto" />
-  <dl>
-    <dt>Che cosa rappresenta</dt>
-    <dd>PDF e log-PDF su I<sub>restr</sub> a N = 6 e 16, stessi ĉ della Fig. 15, Ĉ<sub>0</sub> ricalcolato sul dominio tagliato.</dd>
-    <dt>Interpretazione</dt>
-    <dd>N = 6 (a): il corpo ora si vede — picco p̂ ≈ 2.19 vs COS 2.29, con un residuo di risalita al bordo destro (p̂(b<sub>r</sub>) ≈ 0.28: il taglio a 5.40 non è oltre il minimo di f a 4.15, un tratto di risalita entra ancora). Confrontare con la Fig. 15(a) dove il corpo era invisibile sotto il picco a 53. N = 16 (b): sovrapposizione completa. Nei log (c)(d): sinistra leggermente sovrastimata a N = 6, destra con U-turn contenuto a ≈ −1.3 (c) e sotto-stima a ≈ −12 (d).</dd>
-    <dt>Hermite</dt>
-    <dd>Presente e indistinguibile dalla Logistica a entrambi gli N: sul CGMY, a differenza di Heston Fig. 11, non c’è alcun «cadavere» Hermite.</dd>
-    <dt>Logistica</dt>
-    <dd>Identica (stesso polinomio). Il confronto di basi qui non discrimina nulla: è un test del dominio, non della base.</dd>
-    <dt>Coerenza col paper</dt>
-    <dd>Replica il protocollo Heston Fig. 11 sul modello esteso. Con dominio conforme a |clr| &lt; 10 l’espansione a momenti funziona anche a N = 6: conferma che il problema della Fig. 15 era il dominio, non la CF CGMY né la base.</dd>
-  </dl>
-  <div class="contest">
-    <strong>Critico CGMY — nuova figura</strong>
-    Relatore: (1) la risalita residua a destra a N = 6 (p̂(b<sub>r</sub>) = 0.28 vs COS ≈ 5×10<sup>−5</sup>) va commentata: il taglio proxy non elimina il difetto del polinomio, lo maschera meno del pieno;
-    (2) taglio esatto |clr| &lt; 10 (x* = 5.32) vs proxy (5.40): quanto cambierebbe p̂(b<sub>r</sub>)?
-    (3) a N = 16 la coda destra sotto-stimata resta: dominio ristretto ≠ code corrette.
-  </div>
 </article>
 
 </main>

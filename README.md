@@ -7,7 +7,7 @@
 
 ## 1. Obiettivo
 
-Questo repository replica **tutti gli esperimenti numerici della Sezione 5** di Gambaro (2024): **Figure 1–12** e **Tabella 2**, e li estende al **CGMY** (Figure 13–17):
+Questo repository replica **tutti gli esperimenti numerici della Sezione 5** di Gambaro (2024): **Figure 1–12** e **Tabella 2**, e li estende al **CGMY** (Figure 13–15, solo dominio ristretto):
 
 | Modello | Skewness | Kurtosi eccesso | Riferimento parametri |
 |---------|----------|-----------------|-----------------------|
@@ -53,7 +53,7 @@ python main.py --models all           # run completo, Figure 1–17 + Tabella 2
 python main.py --models VG            # solo VG: Figure 1, 5, 9
 python main.py --models NIG           # solo NIG: Figure 2, 6, 10
 python main.py --models Heston        # Heston: Figure 3, 7, 8, 11, 12
-python main.py --models CGMY          # solo CGMY: Figure 13, 14, 15, 16, 17
+python main.py --models CGMY          # solo CGMY: Figure 13, 14, 15 (ristretto)
 python main.py --models all --calibrate   # ri-calibra i parametri Heston
 ```
 
@@ -74,10 +74,8 @@ PDF e PNG vengono salvati in `project/output/`.
 | 9–10 | PDF & log-PDF a confronto, N=6 e N=16 | VG, NIG |
 | 11–12 | PDF & log-PDF, dominio ristretto e completo | Heston |
 | 13 | Convergenza coefficienti vs N | CGMY |
-| 14 | 4 distanze densità vs N | CGMY |
-| 15 | PDF & log-PDF, N=6 e N=16 | CGMY |
-| 16 | 4 distanze densità vs N, dominio ristretto (log p > −10) | CGMY |
-| 17 | PDF & log-PDF, N=6 e N=16, dominio ristretto | CGMY |
+| 14 | 4 distanze densità vs N, dominio ristretto (log p > −10) | CGMY |
+| 15 | PDF & log-PDF, N=6 e N=16, dominio ristretto | CGMY |
 | Tabella 2 | Tempi CPU: COS, Hermite N=16, Logistica N=16 | VG, NIG, CGMY, Heston |
 
 Tutte le figure senza suffisso usano i coefficienti stimati ĉ del sistema lineare [eq. 15–16]. Solo le Figure 8 e 12 hanno una copia extra `_c_fourier`, costruita con i cⱼ Fourier esatti [eq. 9]. Motivo: sul dominio Heston L=4 il sistema per ĉ è numericamente instabile (Ĉ₀ underflow, distanze NaN o esplose a N≥10), mentre le figure di Gambaro mostrano la Logistica che continua a decrescere fino a N=16 con distanze ≪ 1. I cⱼ Fourier riproducono quel comportamento e una densità Logistica usabile (Fig. 12); non sostituiscono lo stimatore da momenti, servono solo come confronto su quel caso patologico.
@@ -456,7 +454,7 @@ Per ogni N = 1, 2, ..., N_MAX = 20:
 1. **Costruisce Ã_N** (N×N): cicli annidati su i,j,k con Δ_{p,q,r} precalcolati.
 2. **Costruisce A_N** (N×N): combinazione pesata via Q_n e Ã_N.
 3. **Costruisce b_N** (vettore N): dai momenti di Hermite.
-4. **Risolve**: `scipy.linalg.solve` (decomposizione LU), come nel paper (nessuna regolarizzazione). Un precedente fallback a `numpy.linalg.lstsq` per cond(A_N) > 10¹⁴ è stato rimosso: la soluzione a norma minima non risolveva eq. (15) (per CGMY a N=16: residuo ≈ ‖b‖, ĉ→0, falsa esplosione nelle figure), mentre la LU è backward-stable e a N=16 dà residuo ~10⁻⁸ e d₂(ĉ, c) = 0.016.
+4. **Risolve**: `scipy.linalg.solve` (decomposizione LU), come nel paper (nessuna regolarizzazione). Un precedente fallback a `numpy.linalg.lstsq` per cond(A_N) > 10¹⁴ è stato rimosso per tutti i modelli (anche Heston): la soluzione a norma minima non risolveva eq. (15) (residuo ≈ ‖b‖, ĉ→0). Su CGMY produceva una falsa esplosione a N=16; su Heston appiattiva Hermite in Fig. 11 (pmax ≈ 0.56 vs COS 2.07) e faceva divergere le distanze in Fig. 7. Con LU, sul dominio ristretto Heston, L¹(N=16) ≈ 0.006.
 
 ---
 
@@ -528,10 +526,8 @@ Tutte le distanze sono calcolate via regola dei trapezi sul dominio troncato I.
 | 11 (Heston) | Stesso, dominio ristretto | `fig_density_comparison` | — |
 | 12 (Heston) | Stesso, dominio L=4 | `fig_density_comparison` | senza curva Hermite |
 | 13 (CGMY) | Convergenza coefficienti vs N | `fig_coeff_convergence` | — |
-| 14 (CGMY) | 4 distanze vs N | `fig_density_distances` | dominio L=4 |
-| 15 (CGMY) | PDF & log-PDF, N=6 & N=16 | `fig_density_comparison` | — |
-| 16 (CGMY) | 4 distanze vs N | `fig_density_distances` | dominio ristretto |
-| 17 (CGMY) | PDF & log-PDF, N=6 & N=16 | `fig_density_comparison` | dominio ristretto |
+| 14 (CGMY) | 4 distanze vs N | `fig_density_distances` | dominio ristretto |
+| 15 (CGMY) | PDF & log-PDF, N=6 & N=16 | `fig_density_comparison` | dominio ristretto |
 
 Per rigenerare individualmente:
 ```python

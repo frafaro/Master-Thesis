@@ -187,22 +187,18 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     t_hermite_N16  = 0.0
     t_logistic_N16 = 0.0
 
-    # Fallback lstsq solo per Heston (vedi docstring di solve_system):
-    # per VG/NIG/CGMY LU pura; per Heston si mantiene il comportamento storico.
-    cond_thr = 1e14 if is_heston else None
-
     for N in range(1, N_MAX + 1):
         At_N = build_A_tilde(N, mh)
         b_N  = build_b(N, mh)
 
         # Hermite
         A_herm = build_A(N, Q_hermite, At_N)
-        c_h, _ = solve_system(A_herm, b_N, cond_threshold=cond_thr)
+        c_h, _ = solve_system(A_herm, b_N)
         c_hats_hermite.append(c_h)
 
         # Logistic
         A_log = build_A(N, Q_logistic, At_N)
-        c_l, _ = solve_system(A_log, b_N, cond_threshold=cond_thr)
+        c_l, _ = solve_system(A_log, b_N)
         c_hats_logistic.append(c_l)
 
         if N == 16:
@@ -211,14 +207,14 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
                 At = build_A_tilde(16, mh)
                 b  = build_b(16, mh)
                 A  = build_A(16, Q_hermite, At)
-                return solve_system(A, b, cond_threshold=cond_thr)
+                return solve_system(A, b)
             _, t_hermite_N16 = timed(_time_hermite)
 
             def _time_logistic():
                 At = build_A_tilde(16, mh)
                 b  = build_b(16, mh)
                 A  = build_A(16, Q_logistic, At)
-                return solve_system(A, b, cond_threshold=cond_thr)
+                return solve_system(A, b)
             _, t_logistic_N16 = timed(_time_logistic)
 
     timing_results[model_name]["hermite"]  = t_hermite_N16
@@ -324,18 +320,19 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
                               logistic_only=is_heston, suffix=suffix)
 
     # ── 12-13. Figures 5/6/8: ĉ (default); Fourier only for Fig. 8 ────────────
-    print("  [12] Density distances (full domain)...")
-    dist_h_hat, dist_l_hat = _collect_dists(
-        get_density_hat_hermite, get_density_hat_logistic,
-        x_full, a_full, b_full, p_cos_full, nu_gauss, nu_logis)
-    _save_dist_full(dist_h_hat, dist_l_hat, "")
-    if is_heston:
-        dist_h_fou, dist_l_fou = _collect_dists(
-            get_density_fou_hermite, get_density_fou_logistic,
+    if fig_nums.get("dist_full") is not None:
+        print("  [12] Density distances (full domain)...")
+        dist_h_hat, dist_l_hat = _collect_dists(
+            get_density_hat_hermite, get_density_hat_logistic,
             x_full, a_full, b_full, p_cos_full, nu_gauss, nu_logis)
-        _save_dist_full(dist_h_fou, dist_l_fou, "c_fourier")
+        _save_dist_full(dist_h_hat, dist_l_hat, "")
+        if is_heston:
+            dist_h_fou, dist_l_fou = _collect_dists(
+                get_density_fou_hermite, get_density_fou_logistic,
+                x_full, a_full, b_full, p_cos_full, nu_gauss, nu_logis)
+            _save_dist_full(dist_h_fou, dist_l_fou, "c_fourier")
 
-    # ── 14. Restricted-domain distances (Fig 7 Heston, Fig 16 CGMY) ───────────
+    # ── 14. Restricted-domain distances (Fig 7 Heston, Fig 14 CGMY) ───────────
     # Criterio: |clr(p)| < 10 (Gambaro p.13), implementato col proxy
     # log p > -CLR_TOL in utils.quadrature.clr_domain. Per CGMY il criterio
     # scatta perché |clr(b)| = 10.8 > 10 al bordo destro del dominio L=4.
@@ -358,7 +355,6 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
             model_name + " (restricted domain)", fig_nums["dist_restr"])
 
     # ── 15. Density comparison figures (N=6 and N=16) ─────────────────────────
-    print("  [15] Generating density comparison figures...")
     N6, N16 = CFG.N_FIXED
 
     def _save_dens_full(get_h, get_l, suffix):
@@ -368,11 +364,14 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
                                model_name, fig_nums["dens_full"],
                                show_hermite=(not is_heston), suffix=suffix)
 
-    _save_dens_full(get_density_hat_hermite, get_density_hat_logistic, "")
-    if is_heston:
-        _save_dens_full(get_density_fou_hermite, get_density_fou_logistic, "c_fourier")
+    if fig_nums.get("dens_full") is not None:
+        print("  [15] Generating density comparison figures...")
+        _save_dens_full(get_density_hat_hermite, get_density_hat_logistic, "")
+        if is_heston:
+            _save_dens_full(get_density_fou_hermite, get_density_fou_logistic, "c_fourier")
 
     if fig_nums.get("dens_restr") is not None:
+        print(f"  [15] Density comparison (restricted domain) for {model_name}...")
         ph6 = get_density_hat_hermite(N6, x_restr, a_restr, b_restr)
         ph16 = get_density_hat_hermite(N16, x_restr, a_restr, b_restr)
         pl6 = get_density_hat_logistic(N6, x_restr, a_restr, b_restr)
@@ -442,8 +441,7 @@ def main(args):
             cf_func=cgmy_mod.characteristic_function,
             raw_moments_func=cgmy_mod.raw_moments,
             params=CFG.CGMY_PARAMS,
-            fig_nums={"coeff": 13, "dist_full": 14, "dens_full": 15,
-                      "dist_restr": 16, "dens_restr": 17},
+            fig_nums={"coeff": 13, "dist_restr": 14, "dens_restr": 15},
             timing_results=timing,
         )
 
