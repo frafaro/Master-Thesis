@@ -39,10 +39,12 @@ from moments.hermite_moments import hermite_moments_from_raw, verify_hermite_mom
 # Matrices
 from matrices.basis_matrices import build_H, build_logistic_and_Q
 from matrices.change_of_basis import build_Q_hermite
-from matrices.linear_system import build_A_tilde, build_A, build_b, solve_system
+from matrices.linear_system import (
+    build_A_tilde, build_A, build_b, solve_system, solve_logistic_score,
+)
 
 # Expansion
-from expansion.density import compute_C0, eval_density, exponent_func
+from expansion.density import compute_C0, eval_density
 
 # COS
 from cos.cos_method import cos_density, benchmark_fourier_coeffs, verify_cos_density
@@ -91,18 +93,6 @@ def logistic_weight_original(x, m1, sigma):
     """Logistic weight nu_L((x-m1)/sigma)/sigma (integrates to 1 over x)."""
     z = (x - m1) / sigma
     return logistic_weight(z) / sigma
-
-
-def _fourier_of_function(f, P, nu_weight, x, N):
-    """
-    Coefficienti di Fourier (eq. 9) di una funzione f già valutata sulla griglia:
-        c_j = ∫ f(x) φ_j(x*) ν(x*)/σ dx,  j = 1..N
-    P ha shape (N_MAX+1, len(x)), riga j = φ_j.
-    """
-    c = np.zeros(N)
-    for j in range(1, N + 1):
-        c[j - 1] = np.trapz(f * P[j] * nu_weight, x)
-    return c
 
 
 # ── Core pipeline for one model ───────────────────────────────────────────────
@@ -208,9 +198,10 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
         c_h, _ = solve_system(A_herm, b_N)
         c_hats_hermite.append(c_h)
 
-        # Logistic
-        A_log = build_A(N, Q_logistic, At_N)
-        c_l, _ = solve_system(A_log, b_N)
+        # Logistica: proiezione di d(log p)/dx* su {L'_j} in L2(nu_L).
+        # Non è il trasporto Q del sistema di Hermite.
+        c_l = solve_logistic_score(
+            N, x_full, log_p_cos_full, m1, sigma, alpha_L, beta_L)
         c_hats_logistic.append(c_l)
 
         if N == 16:
@@ -223,10 +214,8 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
             _, t_hermite_N16 = timed(_time_hermite)
 
             def _time_logistic():
-                At = build_A_tilde(16, mh)
-                b  = build_b(16, mh)
-                A  = build_A(16, Q_logistic, At)
-                return solve_system(A, b)
+                return solve_logistic_score(
+                    16, x_full, log_p_cos_full, m1, sigma, alpha_L, beta_L)
             _, t_logistic_N16 = timed(_time_logistic)
 
     timing_results[model_name]["hermite"]  = t_hermite_N16
@@ -246,27 +235,9 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     c_exact_hermite  = benchmark_fourier_coeffs(
         log_p_cos_full, x_full, eval_h_std, nu_gauss, m1, sigma, N_MAX)
 
-    # Griglia su cui confrontare i coefficienti logistici (eq. 9).
-    # Hermite: ω decade così in fretta che L=4 è già in B² (||ĉ^H||=O(1)).
-    # Logistica: ν_L ha code pesanti, quindi su L=4 (Heston |clr|~25) i
-    # coefficienti algebrici di A_L esplodono (cond(A_L)~1e15, ||ĉ^L||~1000)
-    # anche se rappresentano lo STESSO polinomio di grado N. Per Heston
-    # usiamo il dominio |clr|<10 (Gambaro p.13, B²) così ĉ e c vivono nello
-    # stesso L²(I, ν_L). VG/NIG restano su L=4: lì A_L è ben condizionata
-    # e la proiezione stabile coincide con la LU.
-    if is_heston:
-        a_cL, b_cL = clr_domain(
-            lambda xx: np.log(np.maximum(
-                cos_density(xx, cf, a_full, b_full, N_COS), 1e-300)),
-            cumulants_dict, L_start=L, clr_tol=CFG.CLR_TOL)
-        x_cL = make_grid(a_cL, b_cL, GRID)
-        p_cL = cos_density(x_cL, cf, a_full, b_full, N_COS)
-        log_p_cL = np.log(np.maximum(p_cL, 1e-300))
-        nu_logis_cL = logistic_weight_original(x_cL, m1, sigma)
-        print(f"      Logistic coeff domain (restricted): [{a_cL:.3f}, {b_cL:.3f}]")
-    else:
-        x_cL, log_p_cL, nu_logis_cL = x_full, log_p_cos_full, nu_logis
-
+    # I coefficienti logistici sono stimati su I = L=4, lo stesso dominio
+    # della proiezione. Il benchmark di Fourier (eq. 9) usa la stessa griglia.
+    x_cL, log_p_cL, nu_logis_cL = x_full, log_p_cos_full, nu_logis
     c_exact_logistic = benchmark_fourier_coeffs(
         log_p_cL, x_cL, eval_l_std, nu_logis_cL, m1, sigma, N_MAX)
 
@@ -276,22 +247,10 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     #   "all coefficients":      sqrt( Σ_{j=1}^{N}         (ĉj - cj)² )
     # Both use estimation error only (no truncation), x-axis range N=4..16.
     #
-    # Logistica: NON usiamo la LU di A_L (coordinate algebriche ill-conditioned).
-    # Il polinomio di grado N è unico (span{L_1..L_N}=span{h_1..h_N}); lo
-    # valutiamo in base Hermite (stabile) e ne prendiamo i coefficienti
-    # Fourier eq. 9 rispetto a {L_j}, sullo stesso I dei c_j esatti.
-    # Per VG/NIG coincide con la LU; per Heston evita l'esplosione a ~1000.
+    # Logistica: ĉ è la proiezione in L2(nu_L), non le coordinate Q del
+    # polinomio di Hermite. La distanza è ||ĉ^L - c^L|| sulla stessa griglia.
     print("  [9] Computing coefficient convergence distances...")
     N_vals = np.arange(1, N_MAX + 1)
-
-    xs_cL = (x_cL - m1) / sigma
-    L_vals_cL = eval_logistic_recurrence(xs_cL, N_MAX, alpha_L, beta_L)
-    c_plot_logistic = []
-    for n in N_vals:
-        fn_h = make_eval_hermite_std_fn(n)
-        f_n = exponent_func(xs_cL, c_hats_hermite[n - 1], fn_h)
-        c_plot_logistic.append(
-            _fourier_of_function(f_n, L_vals_cL, nu_logis_cL, x_cL, n))
 
     d2_h_first6 = np.array([
         d2_coeff_estim(c_hats_hermite[n-1],  c_exact_hermite[:n],  max_j=6)
@@ -301,10 +260,10 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
         for n in N_vals])
 
     d2_l_first6 = np.array([
-        d2_coeff_estim(c_plot_logistic[n-1], c_exact_logistic[:n], max_j=6)
+        d2_coeff_estim(c_hats_logistic[n-1], c_exact_logistic[:n], max_j=6)
         for n in N_vals])
     d2_l_all = np.array([
-        d2_coeff_estim(c_plot_logistic[n-1], c_exact_logistic[:n])
+        d2_coeff_estim(c_hats_logistic[n-1], c_exact_logistic[:n])
         for n in N_vals])
 
     print("      Logistic d2 (all) N=4..16:",

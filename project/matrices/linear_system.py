@@ -127,6 +127,43 @@ def build_b(N: int, mh: np.ndarray) -> np.ndarray:
     return b
 
 
+def solve_logistic_score(N: int, x: np.ndarray, log_p: np.ndarray,
+                         m1: float, sigma: float,
+                         alpha: np.ndarray, beta: np.ndarray) -> np.ndarray:
+    """
+    Coefficienti logistici: proiezione L2(nu_L) della derivata di log p.
+
+    Il sistema dei momenti (eq. 15) testa f' contro i polinomi di Hermite
+    sotto p, e Q ne riscrive solo le coordinate: il polinomio resta quello
+    di Hermite. Qui le funzioni test sono le derivate della base logistica
+    e il prodotto interno è nu_L, sulla variabile standardizzata x*:
+
+        A[i, n] = ∫ L'_{i+1}(x*) L'_{n+1}(x*) nu_L(x*) dx*
+        b[i]    = ∫ (d log p / dx*) L'_{i+1}(x*) nu_L(x*) dx*
+
+    con i, n = 0..N-1. Il termine noto usa log p della densità COS, perché
+    la matrice delle derivate da sola non dipende dal modello. La densità
+    ricostruita resta C0 exp(sum c_j L_j), formula (16).
+    """
+    from basis.logistic import logistic_weight, eval_logistic_recurrence
+
+    x = np.asarray(x, dtype=float)
+    xs = (x - m1) / sigma
+    nu = logistic_weight(xs)
+    score = sigma * np.gradient(np.asarray(log_p, dtype=float), x)
+    dP = np.gradient(eval_logistic_recurrence(xs, N, alpha, beta), xs, axis=1)
+    A = np.zeros((N, N))
+    b = np.zeros(N)
+    for i in range(N):
+        Li = dP[i + 1]
+        b[i] = np.trapz(score * Li * nu, xs)
+        for n in range(i, N):
+            A[i, n] = np.trapz(Li * dP[n + 1] * nu, xs)
+            A[n, i] = A[i, n]
+    c_hat, _ = solve_system(A, b)
+    return c_hat
+
+
 def solve_system(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, float]:
     """
     Solve A @ c = b via decomposizione LU (Gambaro risolve l'eq. 15
