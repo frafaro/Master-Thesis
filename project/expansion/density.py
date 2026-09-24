@@ -41,8 +41,7 @@ def compute_C0(c_hat: np.ndarray, #coefficienti c^_1,...,c^_N, 0-indexed: c[0]=c
                eval_basis: Callable,
                a: float, b: float,
                m1: float, sigma: float,
-               n_pts: int = 20_000,
-               weight_std: Callable = None) -> float:
+               n_pts: int = 20_000) -> float:
     """
     Compute the normalization constant:
       C^_0 = 1 / (sigma * integral_{I*} exp(f(t)) dt)
@@ -71,22 +70,17 @@ def compute_C0(c_hat: np.ndarray, #coefficienti c^_1,...,c^_N, 0-indexed: c[0]=c
     # subtract max for numerical stability
     f_max = f.max() 
     exp_f = np.exp(f - f_max) #esponenziale di f(t) - f_max per evitare overflow numerico. in questo modo i risultato è compreso tra 0 e 1.
-    if weight_std is None:
-        integral_std = np.trapz(exp_f, t) #calcola l'integrale di exp_f su t usando la formula di trapezio.
-        # integral over x = sigma * integral over x*
-        integral_x = sigma * integral_std * np.exp(f_max) #calcola l'integrale di exp_f su x usando la formula di trapezio. Per capire la formula vedere notes step 9.
-        return 1.0 / integral_x #restituisce il valore di C0.
-    # p = C0 * exp(f) * w(x*)/sigma, C0 = 1 / ∫ exp(f) w(t) dt
-    Z = np.trapz(exp_f * weight_std(t), t) * np.exp(f_max)
-    return 1.0 / Z
+    integral_std = np.trapz(exp_f, t) #calcola l'integrale di exp_f su t usando la formula di trapezio.
+    # integral over x = sigma * integral over x* 
+    integral_x = sigma * integral_std * np.exp(f_max) #calcola l'integrale di exp_f su x usando la formula di trapezio. Per capire la formula vedere notes step 9.
+    return 1.0 / integral_x #restituisce il valore di C0.
 
 
 def eval_density(x: np.ndarray, 
                  c_hat: np.ndarray,
                  C0: float,
                  eval_basis: Callable,
-                 m1: float, sigma: float,
-                 weight_std: Callable = None) -> np.ndarray:
+                 m1: float, sigma: float) -> np.ndarray:
     """
     Evaluate  p^_N(x) = C^_0 * exp( sum_j c^_j * phi_j(x*) )
     at the given x values.
@@ -105,9 +99,7 @@ def eval_density(x: np.ndarray,
     """
     x_std = (np.asarray(x) - m1) / sigma
     f = exponent_func(x_std, c_hat, eval_basis)
-    if weight_std is None:
-        return C0 * np.exp(f)
-    return C0 * np.exp(f) * weight_std(x_std) / sigma
+    return C0 * np.exp(f) #restituisce il valore della densità p^_N(x) usando la funzione exponent_func nei punti x_std. questa corrispone alla nostra p stimata costruita usando l'espansione esponenziale con basi ortogonali.
 
 
 def verify_normalization(x: np.ndarray, p: np.ndarray,
