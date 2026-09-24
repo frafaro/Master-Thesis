@@ -127,6 +127,30 @@ def build_b(N: int, mh: np.ndarray) -> np.ndarray:
     return b
 
 
+def solve_moment_gap(N: int, x: np.ndarray, phi: np.ndarray, w: np.ndarray,
+                     m_std: np.ndarray, mu_ref: np.ndarray) -> np.ndarray:
+    """
+    Linearised moment matching for p = C0 * exp(P) * nu.
+
+    exp(P) ≈ 1 + P, P = sum_{j=1}^N c_j phi_j, so
+        sum_j c_j ∫ x^k phi_j nu dx = m_k - μ_k^nu,   k = 1..N
+    on the standardised line. phi[j] is phi_j on the quadrature grid x,
+    w is nu on that grid, m_std and mu_ref are raw moments of X* and of nu.
+    """
+    x = np.asarray(x, dtype=float)
+    w = np.asarray(w, dtype=float)
+    A = np.zeros((N, N))
+    b = np.zeros(N)
+    xk = np.ones_like(x)
+    for k in range(1, N + 1):
+        xk = xk * x
+        b[k - 1] = m_std[k] - mu_ref[k]
+        for j in range(1, N + 1):
+            A[k - 1, j - 1] = np.trapezoid(xk * phi[j] * w, x)
+    c_hat, _ = solve_system(A, b)
+    return c_hat
+
+
 def solve_system(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, float]:
     """
     Solve A @ c = b via decomposizione LU (Gambaro risolve l'eq. 15

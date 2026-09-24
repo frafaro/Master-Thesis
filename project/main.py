@@ -39,7 +39,7 @@ from moments.hermite_moments import hermite_moments_from_raw, verify_hermite_mom
 # Matrices
 from matrices.basis_matrices import build_H, build_logistic_and_Q
 from matrices.change_of_basis import build_Q_hermite
-from matrices.linear_system import build_A_tilde, build_A, build_b, solve_system
+from matrices.linear_system import build_A_tilde, build_A, build_b, solve_system, solve_moment_gap
 
 # Expansion
 from expansion.density import compute_C0, eval_density, exponent_func
@@ -192,41 +192,45 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     alpha_L, beta_L, Q_logistic = build_logistic_and_Q(N_MAX)
     print(f"      Q_logistic shape: {Q_logistic.shape}, max |diag|: {np.abs(np.diag(Q_logistic)).max():.3f}")
 
-    # ── 7. Solve systems for all N ────────────────────────────────────────────
-    print(f"  [7] Solving linear systems for N=1..{N_MAX}...")
+    # ── 7. Moment-gap system: exp(P)*nu matches raw moments of p ──────────────
+    print(f"  [7] Solving reference-weight moment systems for N=1..{N_MAX}...")
+    from math import comb
+    m_std = np.zeros(N_MAX + 1)
+    m_std[0] = 1.0
+    for n in range(1, N_MAX + 1):
+        acc = 0.0
+        for j in range(n + 1):
+            acc += comb(n, j) * raw_mu[j] * ((-m1) ** (n - j))
+        m_std[n] = acc / sigma**n
+    quad = np.linspace(-12.0, 12.0, 8000)
+    w_g = gaussian_weight(quad)
+    w_l = logistic_weight(quad)
+    mu_g = np.zeros(N_MAX + 1)
+    mu_l = np.zeros(N_MAX + 1)
+    pk = np.ones_like(quad)
+    for k in range(N_MAX + 1):
+        mu_g[k] = np.trapezoid(pk * w_g, quad)
+        mu_l[k] = np.trapezoid(pk * w_l, quad)
+        pk = pk * quad
+    phi_h = eval_hermite(quad, N_MAX)
+    phi_l = eval_logistic_recurrence(quad, N_MAX, alpha_L, beta_L)
+
     c_hats_hermite  = []
     c_hats_logistic = []
     t_hermite_N16  = 0.0
     t_logistic_N16 = 0.0
 
     for N in range(1, N_MAX + 1):
-        At_N = build_A_tilde(N, mh)
-        b_N  = build_b(N, mh)
-
-        # Hermite
-        A_herm = build_A(N, Q_hermite, At_N)
-        c_h, _ = solve_system(A_herm, b_N)
-        c_hats_hermite.append(c_h)
-
-        # Logistic
-        A_log = build_A(N, Q_logistic, At_N)
-        c_l, _ = solve_system(A_log, b_N)
-        c_hats_logistic.append(c_l)
+        c_hats_hermite.append(solve_moment_gap(N, quad, phi_h, w_g, m_std, mu_g))
+        c_hats_logistic.append(solve_moment_gap(N, quad, phi_l, w_l, m_std, mu_l))
 
         if N == 16:
-            # Timed run for Table 2
             def _time_hermite():
-                At = build_A_tilde(16, mh)
-                b  = build_b(16, mh)
-                A  = build_A(16, Q_hermite, At)
-                return solve_system(A, b)
+                return solve_moment_gap(16, quad, phi_h, w_g, m_std, mu_g)
             _, t_hermite_N16 = timed(_time_hermite)
 
             def _time_logistic():
-                At = build_A_tilde(16, mh)
-                b  = build_b(16, mh)
-                A  = build_A(16, Q_logistic, At)
-                return solve_system(A, b)
+                return solve_moment_gap(16, quad, phi_l, w_l, m_std, mu_l)
             _, t_logistic_N16 = timed(_time_logistic)
 
     timing_results[model_name]["hermite"]  = t_hermite_N16
@@ -284,15 +288,6 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     print("  [9] Computing coefficient convergence distances...")
     N_vals = np.arange(1, N_MAX + 1)
 
-    xs_cL = (x_cL - m1) / sigma
-    L_vals_cL = eval_logistic_recurrence(xs_cL, N_MAX, alpha_L, beta_L)
-    c_plot_logistic = []
-    for n in N_vals:
-        fn_h = make_eval_hermite_std_fn(n)
-        f_n = exponent_func(xs_cL, c_hats_hermite[n - 1], fn_h)
-        c_plot_logistic.append(
-            _fourier_of_function(f_n, L_vals_cL, nu_logis_cL, x_cL, n))
-
     d2_h_first6 = np.array([
         d2_coeff_estim(c_hats_hermite[n-1],  c_exact_hermite[:n],  max_j=6)
         for n in N_vals])
@@ -301,10 +296,10 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
         for n in N_vals])
 
     d2_l_first6 = np.array([
-        d2_coeff_estim(c_plot_logistic[n-1], c_exact_logistic[:n], max_j=6)
+        d2_coeff_estim(c_hats_logistic[n-1], c_exact_logistic[:n], max_j=6)
         for n in N_vals])
     d2_l_all = np.array([
-        d2_coeff_estim(c_plot_logistic[n-1], c_exact_logistic[:n])
+        d2_coeff_estim(c_hats_logistic[n-1], c_exact_logistic[:n])
         for n in N_vals])
 
     print("      Logistic d2 (all) N=4..16:",
@@ -322,14 +317,14 @@ def run_model(model_name: str, cf_func, raw_moments_func, params: dict,
     def get_density_hat_hermite(N, x, a, b):
         c_h = c_hats_hermite[N - 1]
         fn = make_eval_hermite_std_fn(N)
-        C0 = compute_C0(c_h, fn, a, b, m1, sigma)
-        return eval_density(x, c_h, C0, fn, m1, sigma)
+        C0 = compute_C0(c_h, fn, a, b, m1, sigma, weight_std=gaussian_weight)
+        return eval_density(x, c_h, C0, fn, m1, sigma, weight_std=gaussian_weight)
 
     def get_density_hat_logistic(N, x, a, b):
         c_l = c_hats_logistic[N - 1]
         fn = make_eval_logistic_std_fn(alpha_L, beta_L, N)
-        C0 = compute_C0(c_l, fn, a, b, m1, sigma)
-        return eval_density(x, c_l, C0, fn, m1, sigma)
+        C0 = compute_C0(c_l, fn, a, b, m1, sigma, weight_std=logistic_weight)
+        return eval_density(x, c_l, C0, fn, m1, sigma, weight_std=logistic_weight)
 
     def get_density_fou_hermite(N, x, a, b, c_vec=None):
         c_h = (c_exact_hermite if c_vec is None else c_vec)[:N]
