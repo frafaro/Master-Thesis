@@ -312,6 +312,67 @@ def fig_density_comparison(x: np.ndarray,
     _save(fig, _fig_filename(fig_num, "density", model_name, suffix))
 
 
+# ── Basis polynomials, degrees 1–4 ───────────────────────────────────────────
+
+def _poly_panels(evals, titles, filename, color):
+    """
+    Four panels, degrees 1–4. The formula is the axes title. The origin is
+    the centre of each panel: symmetric limits and spines through zero.
+    """
+    x = np.linspace(-2.5, 2.5, 800)
+    labels = ["(a)", "(b)", "(c)", "(d)"]
+    fig, axes = plt.subplots(2, 2, figsize=(11, 8))
+    for ax, y, title, plabel in zip(axes.flatten(), evals, titles, labels):
+        yv = y(x)
+        m = max(np.max(np.abs(yv)), 1e-6)
+        ax.plot(x, yv, color=color, linewidth=1.6)
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(-1.15 * m, 1.15 * m)
+        ax.spines["left"].set_position("zero")
+        ax.spines["bottom"].set_position("zero")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.set_title(title, fontsize=12, pad=8)
+        ax.tick_params(direction="in", which="both")
+        ax.grid(False)
+        ax.text(0.5, -0.08, plabel, transform=ax.transAxes,
+                ha="center", va="top", fontsize=12)
+    fig.tight_layout(rect=[0, 0.02, 1, 1])
+    _save(fig, filename)
+
+
+def fig_hermite_poly():
+    """Standardized Hermite polynomials h_n = He_n / sqrt(n!), n = 1..4."""
+    from basis.hermite import eval_hermite
+    titles = [
+        r"$h_1(x) = x$",
+        r"$h_2(x) = (x^2 - 1)/\sqrt{2!}$",
+        r"$h_3(x) = (x^3 - 3x)/\sqrt{3!}$",
+        r"$h_4(x) = (x^4 - 6x^2 + 3)/\sqrt{4!}$",
+    ]
+    evals = [
+        lambda z, n=n: eval_hermite(z, n)[n] for n in range(1, 5)
+    ]
+    _poly_panels(evals, titles, "fig_hermite_poly.pdf", COLORS["hermite"])
+
+
+def fig_logistic_poly():
+    """Normalized logistic polynomials L_n, n = 1..4, from the Stieltjes recurrence."""
+    from basis.logistic import eval_logistic_recurrence, stieltjes_recurrence
+    alpha, beta = stieltjes_recurrence(4)
+    titles = [
+        r"$L_1(x) = x$",
+        r"$L_2(x) = \dfrac{\sqrt{5}}{4}(x^2 - 1)$",
+        r"$L_3(x) = \dfrac{\sqrt{21}}{108}(5x^3 - 21x)$",
+        r"$L_4(x) = \dfrac{1}{576}(35x^4 - 390x^2 + 243)$",
+    ]
+    evals = [
+        lambda z, n=n: eval_logistic_recurrence(z, n, alpha, beta)[n]
+        for n in range(1, 5)
+    ]
+    _poly_panels(evals, titles, "fig_logistic_poly.pdf", COLORS["logistic"])
+
+
 # ── Table 2: CPU times ────────────────────────────────────────────────────────
 
 def print_table2(times: Dict[str, Dict[str, float]]):
